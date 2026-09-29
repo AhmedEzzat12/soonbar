@@ -22,8 +22,9 @@ few things well and stays out of your way.
 
 ## Requirements
 
-- macOS 14 or later.
-- Swift 6 toolchain. Xcode is **not** required — the Command Line Tools are enough
+- macOS 14 Sonoma or later, including macOS 26 Tahoe and macOS 27. Release builds are universal
+  (Apple silicon + Intel).
+- To build: a Swift 6 toolchain. Xcode is **not** required — the Command Line Tools are enough
   (`xcode-select --install`).
 
 ## Build and run
