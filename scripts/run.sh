@@ -2,5 +2,5 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 ./scripts/build-app.sh debug
-pkill -x Soonbar || true
+./scripts/quit-running.sh
 open build/Soonbar.app

@@ -3,7 +3,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 ./scripts/build-app.sh release
-pkill -x Soonbar || true
+./scripts/quit-running.sh
 mkdir -p "$HOME/Applications"
 rm -rf "$HOME/Applications/Soonbar.app"
 cp -R build/Soonbar.app "$HOME/Applications/"
