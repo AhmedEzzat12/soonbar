@@ -36,7 +36,8 @@ export BUILD_NUMBER="$(git rev-list --count HEAD)"
 
 scripts/test.sh
 scripts/build-app.sh release
-ZIP="build/Soonbar-$VERSION.zip"
+# Stable asset name so releases/latest/download/Soonbar.zip always points at the newest build.
+ZIP="build/Soonbar.zip"
 rm -f "$ZIP"
 ditto -c -k --sequesterRsrc --keepParent build/Soonbar.app "$ZIP"
 scripts/make-appcast.sh "$VERSION" "$BUILD_NUMBER" "$ZIP"
