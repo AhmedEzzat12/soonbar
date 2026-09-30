@@ -18,5 +18,12 @@ let package = Package(
             linkerSettings: [.unsafeFlags(["-Xlinker", "-rpath", "-Xlinker", "@executable_path/../Frameworks"])]
         ),
         .testTarget(name: "SoonbarCoreTests", dependencies: ["SoonbarCore"]),
+        // Renders docs/demo.mp4 (motion graphics driven by SoonbarCore). Not part of the app.
+        .executableTarget(
+            name: "DemoVideo",
+            dependencies: ["SoonbarCore"],
+            path: "Tools/DemoVideo",
+            swiftSettings: [.swiftLanguageMode(.v5)]
+        ),
     ]
 )
