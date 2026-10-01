@@ -8,7 +8,7 @@ few things well and stays out of your way.
 
 ![Soonbar demo: menu bar countdown, month overview, quick add and the full-screen meeting alert](docs/demo.gif)
 
-[Watch the full-quality video](docs/demo.mp4) (32 s, 1080p).
+[Watch the full-quality video](docs/demo.mp4) (37 s, 1080p).
 
 ## Features
 
