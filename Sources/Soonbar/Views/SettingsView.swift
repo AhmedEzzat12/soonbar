@@ -50,10 +50,10 @@ struct GeneralSettingsView: View {
     @Environment(AppModel.self) private var model
     @State private var launchAtLogin = LoginItem.isEnabled
     @State private var loginError: String?
-    @State private var autoUpdate = false
 
     var body: some View {
         @Bindable var prefs = prefs
+        @Bindable var updater = model.updater
         Form {
             Section("Startup") {
                 Toggle("Launch at login", isOn: Binding(
@@ -93,10 +93,7 @@ struct GeneralSettingsView: View {
             Section("Updates") {
                 LabeledContent("Version", value: model.updater.version)
                 if model.updater.isEnabled {
-                    Toggle("Check for updates automatically", isOn: Binding(
-                        get: { autoUpdate },
-                        set: { autoUpdate = $0; model.updater.automaticallyChecks = $0 }
-                    ))
+                    Toggle("Check for updates automatically", isOn: $updater.automaticallyChecks)
                     TrailingButtons {
                         Button("Check for Updates…") { model.updater.checkForUpdates() }
                     }
@@ -108,7 +105,6 @@ struct GeneralSettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .onAppear { autoUpdate = model.updater.automaticallyChecks }
     }
 
     static let halfHours = Array(stride(from: 0, through: 24 * 60, by: 30))

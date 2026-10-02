@@ -1,12 +1,14 @@
 import AppKit
+import Observation
 import Sparkle
 
 /// Sparkle auto-updates from the appcast published with each GitHub Release.
 /// Only builds that carry an update-signing public key (release builds from CI) turn it on:
 /// a build without one couldn't verify an update, so it never checks.
 @MainActor
+@Observable
 final class UpdaterService: NSObject, SPUStandardUserDriverDelegate {
-    private var controller: SPUStandardUpdaterController?
+    @ObservationIgnored private var controller: SPUStandardUpdaterController?
 
     override init() {
         super.init()
@@ -14,13 +16,18 @@ final class UpdaterService: NSObject, SPUStandardUserDriverDelegate {
         if !publicKey.isEmpty {
             controller = SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: nil, userDriverDelegate: self)
         }
+        // On unless the user turned it off (SUEnableAutomaticChecks in Info.plist sets the default).
+        automaticallyChecks = controller?.updater.automaticallyChecksForUpdates ?? false
     }
 
     var isEnabled: Bool { controller != nil }
 
-    var automaticallyChecks: Bool {
-        get { controller?.updater.automaticallyChecksForUpdates ?? false }
-        set { controller?.updater.automaticallyChecksForUpdates = newValue }
+    /// Stored so Settings observes it; Sparkle keeps the user's choice in its own defaults.
+    var automaticallyChecks = false {
+        didSet {
+            guard let updater = controller?.updater, updater.automaticallyChecksForUpdates != automaticallyChecks else { return }
+            updater.automaticallyChecksForUpdates = automaticallyChecks
+        }
     }
 
     var version: String {
