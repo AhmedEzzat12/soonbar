@@ -198,5 +198,3 @@ embedded `Sparkle.framework`, then signs it (ad-hoc by default, or `SIGN_IDENTIT
 
 - **`Tools/DemoVideo`** renders `docs/demo.mp4` as motion graphics: SwiftUI scenes drawn from fictional sample
   data with the real SoonbarCore logic, encoded by ffmpeg. It isn't part of the app.
-- **`docs/superpowers/`** holds the original design spec and implementation plan, kept for history; this
-  document describes the code as it is now.

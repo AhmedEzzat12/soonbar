@@ -11,7 +11,8 @@ command -v ffmpeg >/dev/null || { echo "ffmpeg is required: brew install ffmpeg"
 # The Settings scene shows the latest release's version. Releases are tagged on GitHub by `gh release create`,
 # so fetch tags first (best effort; works offline with whatever tags are local).
 git fetch --quiet --tags origin 2>/dev/null || true
-DEMO_VERSION="$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' || true)"
+# Set DEMO_VERSION yourself to show a release that isn't tagged yet.
+DEMO_VERSION="${DEMO_VERSION:-$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' || true)}"
 export DEMO_VERSION="${DEMO_VERSION:-0.0.0}"
 swift run -c release DemoVideo docs/demo.mp4
 ffmpeg -y -loglevel error -i docs/demo.mp4 \
