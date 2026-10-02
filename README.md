@@ -128,6 +128,9 @@ the script refuses to release unpushed code.
   `SIGN_IDENTITY="<certificate name>" scripts/release.sh 1.2.0`. An Apple Developer ID ($99/year) would also
   remove the first-launch Gatekeeper step.
 - The repository must be **public** for others to download releases and for updates to reach them.
+- **Moving installs from another feed** (e.g. a fork or the repo's previous home):
+  `scripts/publish-bridge.sh <owner/repo> <InstalledName.app>` republishes the latest release there, renamed
+  so Sparkle accepts it. The app renames itself to `Soonbar.app` on first launch and follows this repo from then on.
 
 ## Quick add syntax
 
