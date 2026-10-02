@@ -58,6 +58,9 @@ final class AppModel {
     @ObservationIgnored private var observers: [NSObjectProtocol] = []
     @ObservationIgnored private var alertTask: Task<Void, Never>?
     @ObservationIgnored private var alertedEventIDs: Set<String> = []
+    /// Feature state, owned by the AppModel+<Feature>.swift extensions.
+    @ObservationIgnored let meetingBriefState = MeetingBriefState()
+    @ObservationIgnored let meetingAutomationState = MeetingAutomationState()
 
     init(service: CalendarService, prefs: PreferencesStore) {
         self.service = service
@@ -108,6 +111,7 @@ final class AppModel {
         reminders = await service.reminders(dueBefore: interval.end)
         alertedEventIDs.formIntersection(events.map(\.id))
         rescheduleMeetingAlerts()
+        updateMeetingFeatures()
     }
 
     func requestAccess() async {
@@ -125,6 +129,7 @@ final class AppModel {
                 guard let self else { return }
                 self.now = Date()
                 self.rescheduleMeetingAlerts()
+                self.updateMeetingFeatures()
             }
         }
     }
@@ -304,6 +309,14 @@ final class AppModel {
             }
         }
         return nil
+    }
+
+    // MARK: - Meeting features
+
+    /// Runs after every refresh and minute tick, and after their settings change.
+    func updateMeetingFeatures() {
+        updateMeetingBrief()
+        updateMeetingAutomations()
     }
 
     // MARK: - Meeting alerts

@@ -49,7 +49,7 @@ enum SettingsPane: CaseIterable {
 }
 
 /// Explanatory text under a settings group, left-aligned like macOS Settings.
-private struct SectionFooter: View {
+struct SectionFooter: View {
     let text: String
     init(_ text: String) { self.text = text }
 
@@ -63,7 +63,7 @@ private struct SectionFooter: View {
 }
 
 /// A form row whose only content is a button, aligned to the trailing edge like macOS Settings.
-private struct TrailingButtons<Content: View>: View {
+struct TrailingButtons<Content: View>: View {
     @ViewBuilder var content: Content
 
     var body: some View {
@@ -183,6 +183,8 @@ struct MenuBarSettingsView: View {
             } header: {
                 Text("Appearance")
             }
+
+            MeetingTimeLeftSettingsSection()
         }
         .formStyle(.grouped)
     }
@@ -211,6 +213,10 @@ struct CalendarSettingsView: View {
                     }
                 }
             }
+
+            BackToBackSettingsSection()
+
+            ShareAvailabilitySettingsSection()
         }
         .formStyle(.grouped)
         .onChange(of: prefs.agendaDays) { model.scheduleRefresh(delay: 0) }
@@ -244,6 +250,10 @@ struct AlertsSettingsView: View {
             } footer: {
                 SectionFooter("The alert covers every screen. Press Return to join the meeting or Esc to dismiss.")
             }
+
+            MeetingBriefSettingsSection()
+
+            MeetingAutomationsSettingsSection()
         }
         .formStyle(.grouped)
         .onChange(of: prefs.meetingAlertSettings) { model.rescheduleMeetingAlerts() }

@@ -30,6 +30,24 @@ final class PreferencesStore {
         static let meetingAlertsEnabled = "meetingAlertsEnabled"
         static let meetingAlertLeadMinutes = "meetingAlertLeadMinutes"
         static let meetingAlertsVideoOnly = "meetingAlertsVideoOnly"
+        // Meeting brief
+        static let meetingBriefEnabled = "meetingBriefEnabled"
+        static let meetingBriefLeadMinutes = "meetingBriefLeadMinutes"
+        static let meetingBriefOnlyWithAttendees = "meetingBriefOnlyWithAttendees"
+        // Share availability
+        static let shareAvailabilityEnabled = "shareAvailabilityEnabled"
+        static let availabilityDays = "availabilityDays"
+        static let availabilityMinMinutes = "availabilityMinMinutes"
+        static let availabilityIncludeTimeZone = "availabilityIncludeTimeZone"
+        // Back-to-back meetings
+        static let showMeetingTimeLeft = "showMeetingTimeLeft"
+        static let markBackToBack = "markBackToBack"
+        static let backToBackGapMinutes = "backToBackGapMinutes"
+        // Meeting automations
+        static let meetingAutomationsEnabled = "meetingAutomationsEnabled"
+        static let meetingStartShortcut = "meetingStartShortcut"
+        static let meetingEndShortcut = "meetingEndShortcut"
+        static let meetingAutomationsVideoOnly = "meetingAutomationsVideoOnly"
     }
 
     var showNextEvent: Bool { didSet { defaults.set(showNextEvent, forKey: Key.showNextEvent) } }
@@ -57,6 +75,34 @@ final class PreferencesStore {
     var meetingAlertLeadMinutes: Int { didSet { defaults.set(meetingAlertLeadMinutes, forKey: Key.meetingAlertLeadMinutes) } }
     var meetingAlertsVideoOnly: Bool { didSet { defaults.set(meetingAlertsVideoOnly, forKey: Key.meetingAlertsVideoOnly) } }
 
+    // MARK: Meeting brief — a small panel with attendees, notes and links shortly before a meeting.
+    var meetingBriefEnabled: Bool { didSet { defaults.set(meetingBriefEnabled, forKey: Key.meetingBriefEnabled) } }
+    var meetingBriefLeadMinutes: Int { didSet { defaults.set(meetingBriefLeadMinutes, forKey: Key.meetingBriefLeadMinutes) } }
+    var meetingBriefOnlyWithAttendees: Bool { didSet { defaults.set(meetingBriefOnlyWithAttendees, forKey: Key.meetingBriefOnlyWithAttendees) } }
+
+    // MARK: Share availability — copy upcoming free times as text.
+    var shareAvailabilityEnabled: Bool { didSet { defaults.set(shareAvailabilityEnabled, forKey: Key.shareAvailabilityEnabled) } }
+    /// Working days to include, starting today.
+    var availabilityDays: Int { didSet { defaults.set(availabilityDays, forKey: Key.availabilityDays) } }
+    /// Shortest free slot worth offering.
+    var availabilityMinMinutes: Int { didSet { defaults.set(availabilityMinMinutes, forKey: Key.availabilityMinMinutes) } }
+    var availabilityIncludeTimeZone: Bool { didSet { defaults.set(availabilityIncludeTimeZone, forKey: Key.availabilityIncludeTimeZone) } }
+
+    // MARK: Back-to-back meetings
+    /// While in a meeting, the menu bar shows how long it has left.
+    var showMeetingTimeLeft: Bool { didSet { defaults.set(showMeetingTimeLeft, forKey: Key.showMeetingTimeLeft) } }
+    /// The agenda marks meetings that start right after another one ends.
+    var markBackToBack: Bool { didSet { defaults.set(markBackToBack, forKey: Key.markBackToBack) } }
+    /// A gap this short or shorter counts as back-to-back.
+    var backToBackGapMinutes: Int { didSet { defaults.set(backToBackGapMinutes, forKey: Key.backToBackGapMinutes) } }
+
+    // MARK: Meeting automations — run a Shortcut when a meeting starts or ends (e.g. to turn a Focus on/off).
+    var meetingAutomationsEnabled: Bool { didSet { defaults.set(meetingAutomationsEnabled, forKey: Key.meetingAutomationsEnabled) } }
+    /// Shortcut name; nil = none.
+    var meetingStartShortcut: String? { didSet { defaults.set(meetingStartShortcut, forKey: Key.meetingStartShortcut) } }
+    var meetingEndShortcut: String? { didSet { defaults.set(meetingEndShortcut, forKey: Key.meetingEndShortcut) } }
+    var meetingAutomationsVideoOnly: Bool { didSet { defaults.set(meetingAutomationsVideoOnly, forKey: Key.meetingAutomationsVideoOnly) } }
+
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         showNextEvent = defaults.object(forKey: Key.showNextEvent) as? Bool ?? true
@@ -80,6 +126,21 @@ final class PreferencesStore {
         meetingAlertsEnabled = defaults.object(forKey: Key.meetingAlertsEnabled) as? Bool ?? true
         meetingAlertLeadMinutes = defaults.object(forKey: Key.meetingAlertLeadMinutes) as? Int ?? 0
         meetingAlertsVideoOnly = defaults.object(forKey: Key.meetingAlertsVideoOnly) as? Bool ?? false
+        // Every feature below is off until the user turns it on.
+        meetingBriefEnabled = defaults.object(forKey: Key.meetingBriefEnabled) as? Bool ?? false
+        meetingBriefLeadMinutes = defaults.object(forKey: Key.meetingBriefLeadMinutes) as? Int ?? 5
+        meetingBriefOnlyWithAttendees = defaults.object(forKey: Key.meetingBriefOnlyWithAttendees) as? Bool ?? true
+        shareAvailabilityEnabled = defaults.object(forKey: Key.shareAvailabilityEnabled) as? Bool ?? false
+        availabilityDays = defaults.object(forKey: Key.availabilityDays) as? Int ?? 5
+        availabilityMinMinutes = defaults.object(forKey: Key.availabilityMinMinutes) as? Int ?? 30
+        availabilityIncludeTimeZone = defaults.object(forKey: Key.availabilityIncludeTimeZone) as? Bool ?? true
+        showMeetingTimeLeft = defaults.object(forKey: Key.showMeetingTimeLeft) as? Bool ?? false
+        markBackToBack = defaults.object(forKey: Key.markBackToBack) as? Bool ?? false
+        backToBackGapMinutes = defaults.object(forKey: Key.backToBackGapMinutes) as? Int ?? 5
+        meetingAutomationsEnabled = defaults.object(forKey: Key.meetingAutomationsEnabled) as? Bool ?? false
+        meetingStartShortcut = defaults.string(forKey: Key.meetingStartShortcut)
+        meetingEndShortcut = defaults.string(forKey: Key.meetingEndShortcut)
+        meetingAutomationsVideoOnly = defaults.object(forKey: Key.meetingAutomationsVideoOnly) as? Bool ?? false
     }
 
     var workingHours: WorkingHours { WorkingHours(startMinutes: workingHoursStart, endMinutes: workingHoursEnd) }
