@@ -9,6 +9,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let meetingAlert = MeetingAlertWindowController()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        if BundleRelocator.relocateIfNeeded() { return }
         installMainMenu()
         prefs = PreferencesStore()
         model = AppModel(service: CalendarService(), prefs: prefs)

@@ -176,6 +176,11 @@ An `@Observable` object whose properties write through to `UserDefaults` in `did
 `releases/latest/download/appcast.xml`; each update zip is signed with an EdDSA key kept in the release
 maintainer's keychain. Sparkle compares `CFBundleVersion`, which releases set to the git commit count.
 
+Sparkle replaces the installed app in place, keeping its file name, and only accepts an update whose app has
+that file name or the same bundle identifier. `BundleRelocator` runs first thing at launch: if the bundle isn't
+named `<CFBundleName>.app` it renames itself (keeping the newer copy if both exist) and relaunches. Together with
+`scripts/publish-bridge.sh` this moves installs that follow another feed over without a reinstall.
+
 ## Packaging
 
 There is no Xcode project. `scripts/build-app.sh` builds with SwiftPM and assembles the `.app` by hand: binary,
