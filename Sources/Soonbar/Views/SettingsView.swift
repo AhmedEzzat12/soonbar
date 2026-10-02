@@ -4,19 +4,47 @@ import Combine
 import SoonbarCore
 import SwiftUI
 
-struct SettingsView: View {
-    var body: some View {
-        TabView {
-            GeneralSettingsView().tabItem { Label("General", systemImage: "gearshape") }
-            MenuBarSettingsView().tabItem { Label("Menu Bar", systemImage: "menubar.rectangle") }
-            CalendarSettingsView().tabItem { Label("Calendar", systemImage: "calendar") }
-            AlertsSettingsView().tabItem { Label("Alerts", systemImage: "bell") }
-            AccountsSettingsView().tabItem { Label("Accounts", systemImage: "person.2") }
-            ShortcutsSettingsView().tabItem { Label("Shortcuts", systemImage: "keyboard") }
-            PermissionsSettingsView().tabItem { Label("Permissions", systemImage: "lock") }
+/// The Settings panes. `SettingsWindowController` shows them as toolbar tabs, like the system's own
+/// settings windows, so each pane's form fills the window edge to edge.
+enum SettingsPane: CaseIterable {
+    case general, menuBar, calendar, alerts, accounts, shortcuts, permissions
+
+    static let size = CGSize(width: 600, height: 620)
+
+    var title: String {
+        switch self {
+        case .general: "General"
+        case .menuBar: "Menu Bar"
+        case .calendar: "Calendar"
+        case .alerts: "Alerts"
+        case .accounts: "Accounts"
+        case .shortcuts: "Shortcuts"
+        case .permissions: "Permissions"
         }
-        .padding(.top, 10)
-        .frame(width: 600, height: 620)
+    }
+
+    var systemImage: String {
+        switch self {
+        case .general: "gearshape"
+        case .menuBar: "menubar.rectangle"
+        case .calendar: "calendar"
+        case .alerts: "bell"
+        case .accounts: "person.2"
+        case .shortcuts: "keyboard"
+        case .permissions: "lock"
+        }
+    }
+
+    @MainActor @ViewBuilder var view: some View {
+        switch self {
+        case .general: GeneralSettingsView()
+        case .menuBar: MenuBarSettingsView()
+        case .calendar: CalendarSettingsView()
+        case .alerts: AlertsSettingsView()
+        case .accounts: AccountsSettingsView()
+        case .shortcuts: ShortcutsSettingsView()
+        case .permissions: PermissionsSettingsView()
+        }
     }
 }
 
@@ -29,6 +57,7 @@ private struct SectionFooter: View {
         Text(text)
             .font(.callout)
             .foregroundStyle(.secondary)
+            .multilineTextAlignment(.leading)
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
