@@ -12,19 +12,23 @@ NAME="Soonbar"
 APP="build/$NAME.app"
 
 # Release builds are universal: macOS 26 is the last release for Intel Macs, so ship an x86_64 slice too.
-# Debug builds stay host-only for speed.
-ARCH_FLAGS=""
+# Debug builds stay host-only for speed. Source paths baked into assertion messages become repo-relative.
+BUILD_FLAGS="-Xswiftc -file-prefix-map -Xswiftc $PWD=."
 if [[ "$CONFIG" == "release" && "${UNIVERSAL:-1}" == "1" ]]; then
-  ARCH_FLAGS="--arch arm64 --arch x86_64"
+  BUILD_FLAGS="$BUILD_FLAGS --arch arm64 --arch x86_64"
 fi
-# shellcheck disable=SC2086 # ARCH_FLAGS is intentionally word-split
-swift build -c "$CONFIG" --product "$NAME" $ARCH_FLAGS
+# shellcheck disable=SC2086 # BUILD_FLAGS is intentionally word-split (the repo path has no spaces)
+swift build -c "$CONFIG" --product "$NAME" $BUILD_FLAGS
 # shellcheck disable=SC2086
-BIN_DIR="$(swift build -c "$CONFIG" $ARCH_FLAGS --show-bin-path)"
+BIN_DIR="$(swift build -c "$CONFIG" $BUILD_FLAGS --show-bin-path)"
 
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN_DIR/$NAME" "$APP/Contents/MacOS/$NAME"
+if [[ "$CONFIG" == "release" ]]; then
+  # Drop debug symbols: they embed absolute build paths (your home folder and checkout location).
+  strip -S "$APP/Contents/MacOS/$NAME"
+fi
 PLIST="$APP/Contents/Info.plist"
 cp Resources/Info.plist "$PLIST"
 cp Resources/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
