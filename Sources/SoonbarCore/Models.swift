@@ -53,6 +53,27 @@ public struct CalendarInfo: Identifiable, Hashable, Sendable {
     }
 }
 
+/// Someone invited to an event, as the calendar server reports them.
+public struct Attendee: Hashable, Sendable {
+    public enum Status: String, Hashable, Sendable {
+        case accepted, declined, tentative, pending, unknown
+    }
+
+    public var name: String?
+    public var email: String?
+    public var status: Status
+    public var isOrganizer: Bool
+    public var isCurrentUser: Bool
+
+    public init(name: String? = nil, email: String? = nil, status: Status = .unknown, isOrganizer: Bool = false, isCurrentUser: Bool = false) {
+        self.name = name
+        self.email = email
+        self.status = status
+        self.isOrganizer = isOrganizer
+        self.isCurrentUser = isCurrentUser
+    }
+}
+
 public struct CalendarEvent: Identifiable, Hashable, Sendable {
     /// Unique per occurrence (recurring events share `eventIdentifier`).
     public let id: String
@@ -68,6 +89,8 @@ public struct CalendarEvent: Identifiable, Hashable, Sendable {
     public var attendeeCount: Int
     public var isDeclined: Bool
     public var isCancelled: Bool
+    /// Includes the organizer and the current user when the server lists them.
+    public var attendees: [Attendee]
 
     public init(
         id: String,
@@ -82,7 +105,8 @@ public struct CalendarEvent: Identifiable, Hashable, Sendable {
         notes: String? = nil,
         attendeeCount: Int = 0,
         isDeclined: Bool = false,
-        isCancelled: Bool = false
+        isCancelled: Bool = false,
+        attendees: [Attendee] = []
     ) {
         self.id = id
         self.eventIdentifier = eventIdentifier ?? id
@@ -97,6 +121,7 @@ public struct CalendarEvent: Identifiable, Hashable, Sendable {
         self.attendeeCount = attendeeCount
         self.isDeclined = isDeclined
         self.isCancelled = isCancelled
+        self.attendees = attendees
     }
 }
 
