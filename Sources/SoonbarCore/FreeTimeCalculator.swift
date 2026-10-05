@@ -23,19 +23,24 @@ public enum FreeTimeCalculator {
               let workEnd = wallClock(workingHours.endMinutes, on: dayStart, calendar: calendar) else { return [] }
         let windowStart = max(now, workStart)
         guard windowStart < workEnd else { return [] }
+        return freeSlots(events: events, in: DateInterval(start: windowStart, end: workEnd), minimumMinutes: minimumMinutes)
+    }
 
+    /// Gaps of at least `minimumMinutes` inside `window`. Timed events that aren't declined or cancelled
+    /// are busy; all-day events are not (holidays, birthdays and "working from home" markers rarely block time).
+    public static func freeSlots(events: [CalendarEvent], in window: DateInterval, minimumMinutes: Int) -> [DateInterval] {
         let busy = events
-            .filter { !$0.isAllDay && !$0.isCancelled && !$0.isDeclined && $0.end > windowStart && $0.start < workEnd }
-            .map { (start: max($0.start, windowStart), end: min($0.end, workEnd)) }
+            .filter { !$0.isAllDay && !$0.isCancelled && !$0.isDeclined && $0.end > window.start && $0.start < window.end }
+            .map { (start: max($0.start, window.start), end: min($0.end, window.end)) }
             .sorted { $0.start < $1.start }
 
         var slots: [DateInterval] = []
-        var cursor = windowStart
+        var cursor = window.start
         for block in busy {
             if block.start > cursor { slots.append(DateInterval(start: cursor, end: block.start)) }
             cursor = max(cursor, block.end)
         }
-        if cursor < workEnd { slots.append(DateInterval(start: cursor, end: workEnd)) }
+        if cursor < window.end { slots.append(DateInterval(start: cursor, end: window.end)) }
         return slots.filter { $0.duration >= TimeInterval(minimumMinutes * 60) }
     }
 

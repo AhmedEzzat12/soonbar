@@ -40,6 +40,16 @@ struct FooterView: View {
             .keyboardShortcut("n")
             .disabled(model.eventAccess != .granted)
 
+            if model.prefs.shareAvailabilityEnabled {
+                Button {
+                    model.copyAvailability()
+                } label: {
+                    Label("Free times", systemImage: "calendar.badge.clock")
+                }
+                .help("Copy your free times for the next \(model.prefs.availabilityDays) working days")
+                .disabled(model.eventAccess != .granted)
+            }
+
             if model.eventAccess == .granted && model.reminderAccess == .denied {
                 Button("Reminders off") { model.openSettings() }
                     .font(.caption)
