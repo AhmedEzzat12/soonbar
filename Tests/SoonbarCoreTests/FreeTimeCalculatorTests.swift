@@ -51,4 +51,12 @@ import Testing
         let holiday = Fixture.event("Holiday", Fixture.date(2026, 9, 29), Fixture.date(2026, 9, 30), allDay: true)
         #expect(slots([holiday], now: at(10)) == ["10:00-18:00"])
     }
+
+    @Test func slotsInsideAnyWindow() {
+        let events = [Fixture.event("A", at(11), at(12)), Fixture.event("B", at(12, 10), at(13))]
+        let window = DateInterval(start: at(10), end: at(14))
+        let found = FreeTimeCalculator.freeSlots(events: events, in: window, minimumMinutes: 10)
+            .map { "\(hm($0.start))-\(hm($0.end))" }
+        #expect(found == ["10:00-11:00", "12:00-12:10", "13:00-14:00"])
+    }
 }
