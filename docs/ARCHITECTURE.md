@@ -159,6 +159,24 @@ their ids, then sleeps until the **next** alert moment. It re-plans after every 
 change, so it always reflects current events. The alert is one borderless panel per display at screen-saver
 level, visible on every Space and over full-screen apps.
 
+### Opt-in meeting features — `Sources/Soonbar/Features/`
+
+Four features are off by default; each lives in one file under `Features/` (its `AppModel` extension, state
+class and Settings section) with its logic in SoonbarCore. `AppModel.updateMeetingFeatures()` drives the timed
+ones after every refresh and minute tick.
+
+- **Meeting brief** — `MeetingBriefPlanner` decides when, `MeetingBriefBuilder` what (attendees sorted organizer
+  first, links from the notes minus the meeting link, trimmed notes). `MeetingBriefPanelController` shows a
+  non-activating floating panel. Attendees come from EventKit into `CalendarEvent.attendees`.
+- **Share availability** — `AvailabilityPlanner` finds free slots over the next working days (via
+  `FreeTimeCalculator.freeSlots(events:in:minimumMinutes:)`), `AvailabilityFormatter` writes them as text.
+  It fetches its own date range because it can reach past the loaded agenda.
+- **Back-to-back** — `BackToBackDetector` links each meeting to the one it follows or overlaps (agenda mark);
+  `MenuBarTitleSettings.showMeetingTimeLeft` keeps the current meeting in the title with a `→ next` hint and
+  `MenuBarTitle.isUrgent` for the last 5 minutes.
+- **Meeting automations** — `MeetingAutomationTracker` is a small state machine that merges touching meetings
+  into blocks and emits start/end actions; `ShortcutsRunner` runs them with `/usr/bin/shortcuts`.
+
 ### Global shortcuts — `HotKeyCenter`
 
 Uses Carbon's `RegisterEventHotKey`, which works without Accessibility permission. Shortcuts are stored as

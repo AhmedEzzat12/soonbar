@@ -23,6 +23,15 @@ few things well and stays out of your way.
   current meeting, opening Zoom/Teams in their desktop apps when installed.
 - **Full-screen meeting alerts:** when a meeting starts (or 1/2/5 minutes before), an alert covers every
   screen with a big Join button — Return joins, Esc dismisses. Optional, with a video-calls-only filter.
+- **Optional extras** (off until you turn them on in Settings):
+  - **Meeting brief:** a small panel 2–10 minutes before a meeting with who's coming (and their replies),
+    links from the invite and the notes.
+  - **Free times:** a popover button that copies your open slots for the next few working days, ready to paste
+    into a chat.
+  - **Back-to-back meetings:** an orange mark on meetings with no break before them, and a menu bar that
+    keeps the current meeting until it ends (`Standup · 3m left → Design review`).
+  - **Shortcuts on meeting start/end:** run any Shortcut, e.g. one with "Set Focus" to turn on Do Not
+    Disturb while you're in a meeting.
 - **Also:** hides the same meeting invited to two accounts, shows free time between today's meetings,
   keyboard navigation, launch at login, automatic updates. The popover uses macOS's native Liquid Glass; to make
   it more opaque use *System Settings → Accessibility → Display → Reduce Transparency* (or the Liquid Glass

@@ -11,13 +11,13 @@ struct MeetingTimeLeftSettingsSection: View {
     var body: some View {
         @Bindable var prefs = prefs
         Section {
-            Toggle("Show time left during a meeting", isOn: $prefs.showMeetingTimeLeft)
+            Toggle("Keep the current meeting in the menu bar until it ends", isOn: $prefs.showMeetingTimeLeft)
                 .disabled(!prefs.showNextEvent)
         } header: {
             Text("During a meeting")
         } footer: {
-            SectionFooter("For example “Standup · 12m left”, or “Standup · 3m left → Design review” when the next "
-                          + "meeting starts right after. The last 5 minutes are shown in red.")
+            SectionFooter("Normally the next meeting takes over 10 minutes before it starts. With this on, the menu bar "
+                          + "shows “Standup · 3m left → Design review” instead, and turns red in the last 5 minutes.")
         }
     }
 }
