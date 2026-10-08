@@ -18,7 +18,10 @@ few things well and stays out of your way.
   *System Settings → Internet Accounts*. Each row shows its calendar color and an account badge.
 - **Quick add (⌥⌘N from anywhere):** type `Lunch with Sara tomorrow 1pm 1h #work` and check the pre-filled form.
   Start with `!` for a reminder (`!Pay rent friday`).
-- **Reminders:** due and overdue reminders sit in the agenda; tick them off in place (with a 2-second undo).
+- **Reminders:** due and overdue reminders sit in the agenda; tick them off in place (with a 2-second undo),
+  click one to open it in Reminders, or right-click to push it to later (in an hour, this evening, tomorrow,
+  next week).
+- **Right-click an event** to join, copy the meeting link or the details, or open it in Calendar.
 - **Meetings:** a Join button for Zoom, Google Meet, Teams, Webex, FaceTime and Slack links; ⌥⌘J joins the
   current meeting, opening Zoom/Teams in their desktop apps when installed.
 - **Full-screen meeting alerts:** when a meeting starts (or 1/2/5 minutes before), an alert covers every

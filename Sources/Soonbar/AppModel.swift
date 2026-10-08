@@ -285,6 +285,24 @@ final class AppModel {
         }
     }
 
+    func postpone(_ item: ReminderItem, _ option: ReminderPostpone) {
+        let due = option.newDue(for: item, now: Date(), calendar: calendar)
+        do {
+            try service.setReminderDue(id: item.id, due: due.date, hasTime: due.hasTime)
+            showToast("Moved to \(AgendaFormatting.shortDate(due.date, calendar: calendar, locale: .current))"
+                      + (due.hasTime ? " \(AgendaFormatting.time(due.date, calendar: calendar, locale: .current))" : ""))
+            scheduleRefresh(delay: 0)
+        } catch {
+            showToast("Couldn't move reminder: \(error.localizedDescription)")
+        }
+    }
+
+    func copy(_ text: String, toast: String) {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
+        showToast(toast)
+    }
+
     func save(_ draft: QuickAddDraft, calendarID: String) throws {
         let draft = draft.normalized(calendar: calendar)
         let title = draft.title.trimmingCharacters(in: .whitespaces)

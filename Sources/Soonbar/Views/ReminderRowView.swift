@@ -41,6 +41,22 @@ struct ReminderRowView: View {
         .padding(.horizontal, 12)
         .opacity(item.isCompleted ? 0.6 : 1)
         .animation(.easeInOut(duration: 0.2), value: item.isCompleted)
+        .contentShape(Rectangle())
+        .onTapGesture { RemindersAppLauncher.open(reminderID: item.id) }
+        .help("Open in Reminders")
+        .contextMenu {
+            Button("Open in Reminders") { RemindersAppLauncher.open(reminderID: item.id) }
+            Button(item.isCompleted ? "Mark as Not Done" : "Mark as Done") { model.toggleReminder(item) }
+            if !item.isCompleted {
+                Menu("Remind Me Later") {
+                    ForEach(ReminderPostpone.options(now: model.now, calendar: model.calendar), id: \.self) { option in
+                        Button(option.title) { model.postpone(item, option) }
+                    }
+                }
+            }
+            Divider()
+            Button("Copy Title") { model.copy(item.title, toast: "Copied") }
+        }
     }
 
     private var whenText: String? {

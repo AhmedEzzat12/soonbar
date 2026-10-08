@@ -115,6 +115,18 @@ final class CalendarService {
         try store.save(reminder, commit: true)
     }
 
+    /// Moves a reminder's due date. Its alarm moves with it (a timed reminder alerts at its due time, as quick add sets up).
+    func setReminderDue(id: String, due: Date, hasTime: Bool) throws {
+        guard let reminder = store.calendarItem(withIdentifier: id) as? EKReminder else {
+            throw CalendarServiceError.reminderNotFound
+        }
+        let fields: Set<Calendar.Component> = hasTime ? [.year, .month, .day, .hour, .minute] : [.year, .month, .day]
+        reminder.dueDateComponents = Calendar.current.dateComponents(fields, from: due)
+        for alarm in reminder.alarms ?? [] where alarm.absoluteDate != nil { reminder.removeAlarm(alarm) }
+        if hasTime { reminder.addAlarm(EKAlarm(absoluteDate: due)) }
+        try store.save(reminder, commit: true)
+    }
+
     func defaultEventCalendarID() -> String? { store.defaultCalendarForNewEvents?.calendarIdentifier }
     func defaultReminderListID() -> String? { store.defaultCalendarForNewReminders()?.calendarIdentifier }
 

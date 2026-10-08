@@ -61,6 +61,20 @@ struct EventRowView: View {
         .background(ongoing ? Color.accentColor.opacity(0.08) : Color.clear)
         .contentShape(Rectangle())
         .onTapGesture { withAnimation(.easeInOut(duration: 0.15)) { expanded.toggle() } }
+        .contextMenu {
+            if let link, !event.isAllDay, event.end > model.now {
+                Button("Join \(link.provider.displayName)") { model.join(link) }
+            }
+            if let link {
+                Button("Copy Meeting Link") { model.copy(link.url.absoluteString, toast: "Link copied") }
+            }
+            Button("Copy Details") { model.copy(EventDetailView.detailsText(event, link: link), toast: "Details copied") }
+            Button("Open in Calendar") { CalendarAppLauncher.open(eventIdentifier: event.eventIdentifier) }
+            Divider()
+            Button(expanded ? "Hide Details" : "Show Details") {
+                withAnimation(.easeInOut(duration: 0.15)) { expanded.toggle() }
+            }
+        }
     }
 }
 
@@ -96,11 +110,7 @@ struct EventDetailView: View {
             HStack {
                 if let link {
                     Button("Join") { model.join(link) }
-                    Button("Copy link") {
-                        NSPasteboard.general.clearContents()
-                        NSPasteboard.general.setString(link.url.absoluteString, forType: .string)
-                        model.showToast("Link copied")
-                    }
+                    Button("Copy link") { model.copy(link.url.absoluteString, toast: "Link copied") }
                 }
                 Button("Open in Calendar") { CalendarAppLauncher.open(eventIdentifier: event.eventIdentifier) }
             }
@@ -110,11 +120,19 @@ struct EventDetailView: View {
         .padding(.top, 4)
     }
 
-    private var intervalText: String {
+    private var intervalText: String { Self.intervalText(event) }
+
+    static func intervalText(_ event: CalendarEvent) -> String {
         let formatter = DateIntervalFormatter()
         formatter.dateStyle = .medium
         formatter.timeStyle = event.isAllDay ? .none : .short
         return formatter.string(from: event.start, to: event.end)
+    }
+
+    /// Title, time, place and meeting link as plain text, for pasting into a chat or note.
+    static func detailsText(_ event: CalendarEvent, link: MeetingLink?) -> String {
+        let place = event.location.flatMap { $0.isEmpty || $0 == link?.url.absoluteString ? nil : $0 }
+        return [event.title, intervalText(event), place, link?.url.absoluteString].compactMap { $0 }.joined(separator: "\n")
     }
 
     static func linkified(_ text: String) -> AttributedString {

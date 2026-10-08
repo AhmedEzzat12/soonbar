@@ -33,3 +33,15 @@ enum CalendarAppLauncher {
         NSWorkspace.shared.open(URL(fileURLWithPath: "/System/Applications/Calendar.app"))
     }
 }
+
+enum RemindersAppLauncher {
+    /// Opens the reminder in Reminders.app (its x-apple-reminderkit:// scheme), falling back to just launching Reminders.
+    static func open(reminderID: String) {
+        if let encoded = reminderID.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed),
+           let url = URL(string: "x-apple-reminderkit://REMCDReminder/\(encoded)"),
+           NSWorkspace.shared.open(url) {
+            return
+        }
+        NSWorkspace.shared.open(URL(fileURLWithPath: "/System/Applications/Reminders.app"))
+    }
+}
