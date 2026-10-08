@@ -53,7 +53,8 @@ follows this):
 | `docs:` | Documentation, demo video |
 | `build:` / `chore:` | Scripts, packaging, housekeeping |
 
-Explain *why* in the commit body when it isn't obvious from the diff.
+Explain *why* in the commit body when it isn't obvious from the diff. Release notes are built from `feat:`/`fix:`
+commits with no scope or the `app` scope, so word those for people using the app; `core` commits stay internal.
 
 ## Pull request checklist
 

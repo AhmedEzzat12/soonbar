@@ -7,7 +7,8 @@
 #
 # Usage: scripts/release.sh 1.2.0
 # Release notes (shown in the app's update window and on GitHub) are generated from the user-facing commits
-# since the previous release — feat:/fix: with no scope or the app/core scope. To write your own instead:
+# since the previous release — feat:/fix: with no scope or the app scope (core commits are internal building
+# blocks, so they're left out). To write your own instead:
 #   RELEASE_NOTES=notes.txt scripts/release.sh 1.2.0
 # Optional: SIGN_IDENTITY="<code-signing certificate name>" keeps one identity across updates,
 #           so macOS doesn't ask for Calendar/Reminders access again after each update.
@@ -55,7 +56,7 @@ if [[ -n "${RELEASE_NOTES:-}" ]]; then
 else
   PREVIOUS_TAG="$(git describe --tags --abbrev=0 2>/dev/null || true)"
   git log ${PREVIOUS_TAG:+"$PREVIOUS_TAG..HEAD"} --format=%s \
-    | { grep -E '^(feat|fix)(\((app|core)\))?: ' || true; } \
+    | { grep -E '^(feat|fix)(\(app\))?: ' || true; } \
     | sed -E 's/^(feat|fix)(\([^)]*\))?: //' \
     | awk '{ print "• " toupper(substr($0, 1, 1)) substr($0, 2) }' > "$NOTES"
   [[ -s "$NOTES" ]] || echo "• Small improvements and fixes." > "$NOTES"
