@@ -109,7 +109,8 @@ struct GeneralSettingsView: View {
 
             Section("Free time") {
                 Toggle("Show free time today", isOn: $prefs.showFreeTime)
-                if prefs.showFreeTime {
+                // Free times sharing uses the working hours too.
+                if prefs.showFreeTime || prefs.shareAvailabilityEnabled {
                     Picker("Working hours start", selection: $prefs.workingHoursStart) {
                         ForEach(Self.halfHours, id: \.self) { Text(Self.label($0)).tag($0) }
                     }
