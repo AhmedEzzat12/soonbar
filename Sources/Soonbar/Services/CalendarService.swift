@@ -150,8 +150,43 @@ final class CalendarService {
             notes: event.notes,
             attendeeCount: event.attendees?.count ?? 0,
             isDeclined: me?.participantStatus == .declined,
-            isCancelled: event.status == .canceled
+            isCancelled: event.status == .canceled,
+            attendees: attendees(of: event)
         )
+    }
+
+    /// The organizer is listed too when the server leaves them out of `attendees`.
+    private static func attendees(of event: EKEvent) -> [Attendee] {
+        var participants = event.attendees ?? []
+        let organizerURL = event.organizer?.url
+        if let organizer = event.organizer, !participants.contains(where: { $0.url == organizer.url }) {
+            participants.insert(organizer, at: 0)
+        }
+        return participants.map { participant in
+            Attendee(
+                name: participant.name,
+                email: email(from: participant.url),
+                status: status(participant.participantStatus),
+                isOrganizer: participant.url == organizerURL,
+                isCurrentUser: participant.isCurrentUser
+            )
+        }
+    }
+
+    private static func email(from url: URL) -> String? {
+        guard url.scheme?.lowercased() == "mailto" else { return nil }
+        let address = String(url.absoluteString.dropFirst("mailto:".count))
+        return address.removingPercentEncoding ?? address
+    }
+
+    private static func status(_ status: EKParticipantStatus) -> Attendee.Status {
+        switch status {
+        case .accepted: .accepted
+        case .declined: .declined
+        case .tentative: .tentative
+        case .pending: .pending
+        default: .unknown // delegated, completed, in process, unknown
+        }
     }
 
     /// Nonisolated so the EventKit callback (background thread) never touches main-actor state.
