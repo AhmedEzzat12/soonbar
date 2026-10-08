@@ -17,7 +17,7 @@ struct MeetingTimeLeftSettingsSection: View {
             Text("During a meeting")
         } footer: {
             SectionFooter("Normally the next meeting takes over 10 minutes before it starts. With this on, the menu bar "
-                          + "shows “Standup · 3m left → Design review” instead, and turns red in the last 5 minutes.")
+                          + "shows “Standup · 3m left → Design review” instead, with a red timer in the last 5 minutes.")
         }
     }
 }

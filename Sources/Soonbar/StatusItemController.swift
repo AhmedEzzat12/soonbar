@@ -91,9 +91,25 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
         if let dotColor {
             text.append(NSAttributedString(string: "● ", attributes: [.font: font, .foregroundColor: NSColor(dotColor)]))
         }
-        // systemRed adapts to light and dark menu bars, like the agenda's "Overdue" badge.
-        let textColor: NSColor = title.isUrgent ? .systemRed : .labelColor
-        text.append(NSAttributedString(string: title.text, attributes: [.font: font, .foregroundColor: textColor]))
+        // Red text on the translucent menu bar is hard to read, so urgency is a red icon and the text stays neutral.
+        if title.isUrgent, let timer = Self.urgentIcon(font: font) {
+            text.append(NSAttributedString(attachment: timer))
+            text.append(NSAttributedString(string: " ", attributes: [.font: font]))
+        }
+        text.append(NSAttributedString(string: title.text, attributes: [.font: font, .foregroundColor: NSColor.labelColor]))
         button.attributedTitle = text
+    }
+
+    /// A red timer sized and baseline-aligned to the menu bar font.
+    private static func urgentIcon(font: NSFont) -> NSTextAttachment? {
+        let config = NSImage.SymbolConfiguration(pointSize: font.pointSize, weight: .semibold)
+            .applying(.init(paletteColors: [.systemRed]))
+        guard let image = NSImage(systemSymbolName: "timer", accessibilityDescription: "Ending soon")?
+            .withSymbolConfiguration(config) else { return nil }
+        image.isTemplate = false
+        let attachment = NSTextAttachment()
+        attachment.image = image
+        attachment.bounds = CGRect(x: 0, y: font.descender / 2, width: image.size.width, height: image.size.height)
+        return attachment
     }
 }
