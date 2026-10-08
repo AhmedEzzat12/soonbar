@@ -94,7 +94,11 @@ struct MeetingBriefSettingsSection: View {
             SectionFooter("A small panel in the top-right corner shows who's coming, the notes and any links. "
                           + "It never takes focus and closes a couple of minutes after the meeting starts.")
         }
-        .onChange(of: prefs.meetingBriefEnabled) { model.updateMeetingFeatures() }
+        .onChange(of: prefs.meetingBriefEnabled) { _, enabled in
+            // Turning the brief off also closes one that's showing.
+            if !enabled { model.meetingBriefState.panel.dismiss() }
+            model.updateMeetingFeatures()
+        }
         .onChange(of: prefs.meetingBriefSettings) { model.updateMeetingFeatures() }
     }
 }
