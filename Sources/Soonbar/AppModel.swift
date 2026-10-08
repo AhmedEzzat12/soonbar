@@ -192,7 +192,9 @@ final class AppModel {
         guard prefs.showNextEvent, eventAccess == .granted else { return nil }
         return MenuBarTitleFormatter.title(
             events: visibleEvents, now: now,
-            settings: MenuBarTitleSettings(window: prefs.menuBarWindow, maxTitleLength: prefs.maxTitleLength),
+            settings: MenuBarTitleSettings(
+                window: prefs.menuBarWindow, maxTitleLength: prefs.maxTitleLength, showMeetingTimeLeft: prefs.showMeetingTimeLeft
+            ),
             calendar: calendar, locale: .current
         )
     }
