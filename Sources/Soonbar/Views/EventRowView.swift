@@ -5,6 +5,8 @@ import SwiftUI
 struct EventRowView: View {
     let event: CalendarEvent
     let day: Date
+    /// Set when the meeting starts with no break after another one.
+    var backToBack: BackToBackLink?
     @Environment(AppModel.self) private var model
     @State private var expanded = false
 
@@ -25,6 +27,13 @@ struct EventRowView: View {
                         .font(.caption)
                         .monospacedDigit()
                         .foregroundStyle(.secondary)
+                    if let backToBack {
+                        Image(systemName: "arrow.turn.down.right")
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(.orange)
+                            .help(backToBack.label)
+                            .accessibilityLabel(backToBack.label)
+                    }
                     Spacer(minLength: 4)
                     AccountBadgeView(text: model.badge(forCalendarID: event.calendarID))
                         .help(model.account(forCalendarID: event.calendarID)?.title ?? "")

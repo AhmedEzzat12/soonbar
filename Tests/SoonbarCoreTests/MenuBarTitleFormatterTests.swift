@@ -16,6 +16,14 @@ import Testing
         )?.text
     }
 
+    func timeLeft(_ events: [CalendarEvent], at time: Date? = nil, max: Int = 25) -> MenuBarTitle? {
+        MenuBarTitleFormatter.title(
+            events: events, now: time ?? now,
+            settings: MenuBarTitleSettings(maxTitleLength: max, showMeetingTimeLeft: true),
+            calendar: cal, locale: Fixture.locale
+        )
+    }
+
     @Test func nothingScheduledShowsNoTitle() {
         #expect(title([]) == nil)
     }
@@ -66,5 +74,74 @@ import Testing
 
     @Test func truncationTrimsTrailingSpace() {
         #expect(MenuBarTitleFormatter.truncate("Team sync meeting", to: 6) == "Team…")
+    }
+
+    // MARK: Time left in the current meeting
+
+    @Test func timeLeftBeatsImminentNextEvent() {
+        let events = [Fixture.event("Focus", at(9, 30), at(10, 7)), Fixture.event("Standup", at(10, 8), at(10, 23))]
+        #expect(timeLeft(events)?.text == "Focus · 7m left")
+    }
+
+    @Test func timeLeftShowsTheMeetingThatFollowsWithoutABreak() {
+        let events = [Fixture.event("Standup", at(9, 45), at(10, 12)), Fixture.event("Design review", at(10, 12), at(11))]
+        #expect(timeLeft(events)?.text == "Standup · 12m left → Design review")
+    }
+
+    @Test func timeLeftShowsAMeetingThatStartsBeforeThisOneEnds() {
+        let events = [Fixture.event("Standup", at(9, 45), at(10, 15)), Fixture.event("Design review", at(10, 10), at(11))]
+        #expect(timeLeft(events)?.text == "Standup · 15m left → Design review")
+    }
+
+    @Test func timeLeftOmitsANextMeetingAfterABreak() {
+        let events = [Fixture.event("Standup", at(9, 45), at(10, 12)), Fixture.event("Design review", at(10, 13), at(11))]
+        #expect(timeLeft(events)?.text == "Standup · 12m left")
+    }
+
+    @Test func timeLeftUsesTheOverlappingMeetingThatEndsFirst() {
+        let events = [Fixture.event("Long", at(9), at(12)), Fixture.event("Short", at(9, 45), at(10, 20))]
+        #expect(timeLeft(events)?.text == "Short · 20m left")
+    }
+
+    @Test func timeLeftIsUrgentInTheLastFiveMinutes() {
+        let events = [Fixture.event("Standup", at(9, 45), at(10, 5))]
+        #expect(timeLeft(events)?.isUrgent == true)
+        #expect(timeLeft(events, at: at(9, 59))?.isUrgent == false)
+    }
+
+    @Test func timeLeftIsNeverUrgentWhenTheSettingIsOff() {
+        let events = [Fixture.event("Standup", at(9, 45), at(10, 5))]
+        let result = MenuBarTitleFormatter.title(
+            events: events, now: now, settings: MenuBarTitleSettings(), calendar: cal, locale: Fixture.locale
+        )
+        #expect(result?.text == "Standup · 5m left")
+        #expect(result?.isUrgent == false)
+    }
+
+    @Test func timeLeftSkipsAllDayDeclinedAndCancelled() {
+        let events = [
+            Fixture.event("Holiday", Fixture.date(2026, 9, 29), Fixture.date(2026, 9, 30), allDay: true),
+            Fixture.event("Declined", at(9, 30), at(10, 10), declined: true),
+            Fixture.event("Cancelled", at(9, 30), at(10, 20), cancelled: true),
+            Fixture.event("Next", at(10, 8), at(11)),
+        ]
+        #expect(timeLeft(events)?.text == "Next · in 8m")
+    }
+
+    @Test func timeLeftIgnoresDeclinedFollowUp() {
+        let events = [Fixture.event("Standup", at(9, 45), at(10, 12)), Fixture.event("Skip", at(10, 12), at(11), declined: true)]
+        #expect(timeLeft(events)?.text == "Standup · 12m left")
+    }
+
+    @Test func timeLeftTruncatesBothTitles() {
+        let events = [
+            Fixture.event("Quarterly planning", at(9, 30), at(10, 3)),
+            Fixture.event("Design review sync", at(10, 3), at(11)),
+        ]
+        #expect(timeLeft(events, max: 10)?.text == "Quarterly… · 3m left → Design re…")
+    }
+
+    @Test func timeLeftOutsideMeetingsShowsTheNextEvent() {
+        #expect(timeLeft([Fixture.event("Lunch", at(12), at(13))])?.text == "Lunch · in 2h")
     }
 }

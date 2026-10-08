@@ -81,13 +81,19 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
             return
         }
         button.imagePosition = .imageLeading
-        if prefs.showColorDot, let color = model.calendarInfo(title.event.calendarID)?.color {
-            let font = NSFont.menuBarFont(ofSize: 0)
-            let text = NSMutableAttributedString(string: Self.iconTitleGap + "● ", attributes: [.font: font, .foregroundColor: NSColor(color)])
-            text.append(NSAttributedString(string: title.text, attributes: [.font: font, .foregroundColor: NSColor.labelColor]))
-            button.attributedTitle = text
-        } else {
+        let dotColor = prefs.showColorDot ? model.calendarInfo(title.event.calendarID)?.color : nil
+        guard dotColor != nil || title.isUrgent else {
             button.title = Self.iconTitleGap + title.text
+            return
         }
+        let font = NSFont.menuBarFont(ofSize: 0)
+        let text = NSMutableAttributedString(string: Self.iconTitleGap, attributes: [.font: font])
+        if let dotColor {
+            text.append(NSAttributedString(string: "● ", attributes: [.font: font, .foregroundColor: NSColor(dotColor)]))
+        }
+        // systemRed adapts to light and dark menu bars, like the agenda's "Overdue" badge.
+        let textColor: NSColor = title.isUrgent ? .systemRed : .labelColor
+        text.append(NSAttributedString(string: title.text, attributes: [.font: font, .foregroundColor: textColor]))
+        button.attributedTitle = text
     }
 }

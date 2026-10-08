@@ -15,9 +15,10 @@ struct AgendaListView: View {
                             .padding(.horizontal, 12)
                             .padding(.vertical, 6)
                     }
+                    let backToBack = model.backToBackPredecessors
                     ForEach(model.agenda) { day in
                         Section {
-                            DayContentView(day: day, showEarlier: $showEarlier)
+                            DayContentView(day: day, backToBack: backToBack, showEarlier: $showEarlier)
                         } header: {
                             DayHeaderView(date: day.date).id(day.date)
                         }
@@ -50,6 +51,8 @@ struct DayHeaderView: View {
 
 struct DayContentView: View {
     let day: AgendaDay
+    /// Computed once for the whole list; see AppModel.backToBackPredecessors.
+    let backToBack: [String: BackToBackLink]
     @Binding var showEarlier: Bool
     @Environment(AppModel.self) private var model
 
@@ -72,12 +75,12 @@ struct DayContentView: View {
                 .padding(.horizontal, 12)
                 .padding(.vertical, 3)
             if showEarlier {
-                ForEach(day.earlierEvents) { EventRowView(event: $0, day: day.date).opacity(0.55) }
+                ForEach(day.earlierEvents) { EventRowView(event: $0, day: day.date, backToBack: backToBack[$0.id]).opacity(0.55) }
             }
         }
         ForEach(day.entries) { entry in
             switch entry {
-            case .event(let event): EventRowView(event: event, day: day.date)
+            case .event(let event): EventRowView(event: event, day: day.date, backToBack: backToBack[event.id])
             case .reminder(let reminder): ReminderRowView(item: reminder)
             case .free(let interval): FreeRowView(interval: interval)
             }
