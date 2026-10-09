@@ -215,6 +215,10 @@ struct CalendarSettingsView: View {
                 }
             }
 
+            SecondTimeZoneSettingsSection()
+
+            InvitationsSettingsSection()
+
             BackToBackSettingsSection()
 
             ShareAvailabilitySettingsSection()

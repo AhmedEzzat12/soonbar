@@ -8,11 +8,14 @@ struct EventRowView: View {
     /// Set when the meeting starts with no break after another one.
     var backToBack: BackToBackLink?
     @Environment(AppModel.self) private var model
+    @Environment(PreferencesStore.self) private var prefs
     @State private var expanded = false
 
     var body: some View {
         let link = MeetingLinkDetector.detect(url: event.url, location: event.location, notes: event.notes)
-        let ongoing = !event.isAllDay && event.start <= model.now && event.end > model.now
+        let endedEarly = model.endedEarlyIDs.contains(event.id)
+        let ongoing = !event.isAllDay && event.start <= model.now && event.end > model.now && !endedEarly
+        let unconfirmed = prefs.markUnansweredInvites && InviteStatus.isUnconfirmed(event)
         let joinable = link != nil && !event.isAllDay && event.end > model.now
             && event.start.timeIntervalSince(model.now) <= 15 * 60
         let subtitle = link?.provider.displayName ?? event.location
@@ -27,6 +30,14 @@ struct EventRowView: View {
                         .font(.caption)
                         .monospacedDigit()
                         .foregroundStyle(.secondary)
+                    if endedEarly {
+                        Text("Ended early").font(.caption2).foregroundStyle(.secondary)
+                    } else if unconfirmed {
+                        Label(event.myResponse == .tentative ? "Maybe" : "Not answered", systemImage: "questionmark.circle")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                            .help("You haven't accepted this invitation")
+                    }
                     if let backToBack {
                         Image(systemName: "arrow.turn.down.right")
                             .font(.caption2.weight(.semibold))
@@ -46,6 +57,13 @@ struct EventRowView: View {
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
+                if let zone = prefs.secondTimeZone,
+                   let there = SecondTimeZone.timeRange(for: event, in: zone, calendar: model.calendar, locale: .current) {
+                    Label(there, systemImage: "globe")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                        .lineLimit(1)
+                }
                 if expanded {
                     EventDetailView(event: event, link: link)
                 }
@@ -58,6 +76,7 @@ struct EventRowView: View {
         }
         .padding(.vertical, 5)
         .padding(.horizontal, 12)
+        .opacity(endedEarly || unconfirmed ? 0.6 : 1)
         .background(ongoing ? Color.accentColor.opacity(0.08) : Color.clear)
         .contentShape(Rectangle())
         .onTapGesture { withAnimation(.easeInOut(duration: 0.15)) { expanded.toggle() } }
@@ -70,6 +89,11 @@ struct EventRowView: View {
             }
             Button("Copy Details") { model.copy(EventDetailView.detailsText(event, link: link), toast: "Details copied") }
             Button("Open in Calendar") { CalendarAppLauncher.open(eventIdentifier: event.eventIdentifier) }
+            if endedEarly {
+                Button("Meeting Isn't Over") { model.undoEndEarly(event) }
+            } else if ongoing {
+                Button("Meeting Is Over") { model.endEarly(event) }
+            }
             Divider()
             Button(expanded ? "Hide Details" : "Show Details") {
                 withAnimation(.easeInOut(duration: 0.15)) { expanded.toggle() }

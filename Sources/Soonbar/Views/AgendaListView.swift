@@ -15,6 +15,7 @@ struct AgendaListView: View {
                             .padding(.horizontal, 12)
                             .padding(.vertical, 6)
                     }
+                    InvitationsBanner()
                     let backToBack = model.backToBackPredecessors
                     ForEach(model.agenda) { day in
                         Section {
@@ -40,8 +41,12 @@ struct DayHeaderView: View {
     @Environment(AppModel.self) private var model
 
     var body: some View {
-        Text(AgendaFormatting.dayTitle(for: date, now: model.now, calendar: model.calendar, locale: .current))
-            .font(.subheadline.weight(.semibold))
+        HStack {
+            Text(AgendaFormatting.dayTitle(for: date, now: model.now, calendar: model.calendar, locale: .current))
+                .font(.subheadline.weight(.semibold))
+            Spacer()
+            if model.calendar.isDate(date, inSameDayAs: model.now) { SecondZoneClock() }
+        }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 12)
             .padding(.vertical, 4)

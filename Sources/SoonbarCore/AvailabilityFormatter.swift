@@ -45,8 +45,9 @@ public enum AvailabilityFormatter {
             let times = (byDay[day] ?? []).map { range($0, calendar: there, locale: locale) }.joined(separator: ", ")
             return "\(AgendaFormatting.shortDate(day, calendar: there, locale: locale)): \(times)"
         }
-        if includeTimeZone, let first = slots.first {
-            lines.append("(times in \(timeZoneName(there.timeZone, at: first.start, locale: locale)))")
+        // A city reads better than "GMT-4" for the person receiving it.
+        if includeTimeZone {
+            lines.append("(\(SecondTimeZone.cityName(there.timeZone)) time)")
         }
         return lines.joined(separator: "\n")
     }

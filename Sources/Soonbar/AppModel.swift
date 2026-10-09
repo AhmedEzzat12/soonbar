@@ -33,6 +33,8 @@ final class AppModel {
     private(set) var now = Date()
     private(set) var toast: String?
     private(set) var hotKeyFailures: Set<HotKeyCenter.Action> = []
+    /// Meetings the user marked as over; they leave the menu bar and count as ended for Join and Shortcuts.
+    private(set) var endedEarlyIDs: Set<String> = []
 
     var displayedMonth = Date() {
         didSet {
@@ -110,6 +112,7 @@ final class AppModel {
         events = service.events(in: interval)
         reminders = await service.reminders(dueBefore: interval.end)
         alertedEventIDs.formIntersection(events.map(\.id))
+        endedEarlyIDs.formIntersection(events.map(\.id))
         rescheduleMeetingAlerts()
         updateMeetingFeatures()
     }
@@ -148,6 +151,11 @@ final class AppModel {
         return EventPipeline.visible(
             events, hiddenCalendarIDs: prefs.hiddenCalendarIDs, hideDuplicates: prefs.hideDuplicates, calendarPriority: priority
         )
+    }
+
+    /// Visible events minus the meetings marked as ended early.
+    var activeEvents: [CalendarEvent] {
+        endedEarlyIDs.isEmpty ? visibleEvents : visibleEvents.filter { !endedEarlyIDs.contains($0.id) }
     }
 
     var visibleReminders: [ReminderItem] {
@@ -191,7 +199,7 @@ final class AppModel {
     var menuBarTitle: MenuBarTitle? {
         guard prefs.showNextEvent, eventAccess == .granted else { return nil }
         return MenuBarTitleFormatter.title(
-            events: visibleEvents, now: now,
+            events: activeEvents, now: now,
             settings: MenuBarTitleSettings(
                 window: prefs.menuBarWindow, maxTitleLength: prefs.maxTitleLength, showMeetingTimeLeft: prefs.showMeetingTimeLeft
             ),
@@ -297,6 +305,17 @@ final class AppModel {
         }
     }
 
+    /// The meeting is over early: it leaves the menu bar, and the end-of-meeting Shortcut runs now.
+    func endEarly(_ event: CalendarEvent) {
+        endedEarlyIDs.insert(event.id)
+        updateMeetingFeatures()
+    }
+
+    func undoEndEarly(_ event: CalendarEvent) {
+        endedEarlyIDs.remove(event.id)
+        updateMeetingFeatures()
+    }
+
     func copy(_ text: String, toast: String) {
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(text, forType: .string)
@@ -323,7 +342,7 @@ final class AppModel {
     /// Ongoing or starting within 15 minutes, with a meeting link; earliest start wins.
     func currentMeeting() -> (event: CalendarEvent, link: MeetingLink)? {
         let horizon = now.addingTimeInterval(15 * 60)
-        for event in visibleEvents where !event.isAllDay && event.start <= horizon && event.end > now {
+        for event in activeEvents where !event.isAllDay && event.start <= horizon && event.end > now {
             if let link = MeetingLinkDetector.detect(url: event.url, location: event.location, notes: event.notes) {
                 return (event, link)
             }

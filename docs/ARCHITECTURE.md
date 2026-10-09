@@ -174,6 +174,12 @@ ones after every refresh and minute tick.
 - **Back-to-back** — `BackToBackDetector` links each meeting to the one it follows or overlaps (agenda mark);
   `MenuBarTitleSettings.showMeetingTimeLeft` keeps the current meeting in the title with a `→ next` hint and
   `MenuBarTitle.isUrgent` for the last 5 minutes.
+- **Second time zone** — `SecondTimeZone` formats event times and a clock for the chosen zone; with
+  `displayTimeZone`, `AvailabilityFormatter` regroups free slots by that zone's dates.
+- **Invitations** — `CalendarEvent.myResponse` and `InviteStatus` read the current user's reply from the attendees;
+  EventKit can't send replies, so answering goes through Calendar.
+- **Meeting is over** — `AppModel.endedEarlyIDs` (in memory) removes a meeting from `activeEvents`, which feeds the
+  menu bar title, the Join shortcut and meeting automations; the agenda keeps showing it, dimmed.
 - **Meeting automations** — `MeetingAutomationTracker` is a small state machine that merges touching meetings
   into blocks and emits start/end actions; `ShortcutsRunner` runs them with `/usr/bin/shortcuts`.
 

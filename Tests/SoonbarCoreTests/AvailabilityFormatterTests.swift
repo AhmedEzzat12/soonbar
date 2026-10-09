@@ -46,7 +46,7 @@ import Testing
         let text = AvailabilityFormatter.text(plan, includeTimeZone: true, calendar: cal, locale: Fixture.locale, displayTimeZone: auckland)
         let lines = text?.components(separatedBy: "\n") ?? []
         #expect(lines.prefix(2) == ["Tue 6 Oct: 21:00–22:30", "Wed 7 Oct: 01:00–04:00, 20:00–05:00"])
-        #expect(lines.last?.hasPrefix("(times in ") == true)
+        #expect(lines.last == "(Auckland time)")
     }
 
     @Test func sameOffsetZoneKeepsTheNormalFormat() {

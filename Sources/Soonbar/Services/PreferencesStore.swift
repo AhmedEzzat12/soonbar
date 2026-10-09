@@ -48,6 +48,10 @@ final class PreferencesStore {
         static let meetingStartShortcut = "meetingStartShortcut"
         static let meetingEndShortcut = "meetingEndShortcut"
         static let meetingAutomationsVideoOnly = "meetingAutomationsVideoOnly"
+        // Time zones and invitations
+        static let secondTimeZoneID = "secondTimeZoneID"
+        static let availabilityInSecondZone = "availabilityInSecondZone"
+        static let markUnansweredInvites = "markUnansweredInvites"
     }
 
     var showNextEvent: Bool { didSet { defaults.set(showNextEvent, forKey: Key.showNextEvent) } }
@@ -103,6 +107,14 @@ final class PreferencesStore {
     var meetingEndShortcut: String? { didSet { defaults.set(meetingEndShortcut, forKey: Key.meetingEndShortcut) } }
     var meetingAutomationsVideoOnly: Bool { didSet { defaults.set(meetingAutomationsVideoOnly, forKey: Key.meetingAutomationsVideoOnly) } }
 
+    // MARK: Second time zone — event times and a clock for a place you work with; nil = off.
+    var secondTimeZoneID: String? { didSet { defaults.set(secondTimeZoneID, forKey: Key.secondTimeZoneID) } }
+    /// "Free times" writes its text in the second zone instead of the user's own.
+    var availabilityInSecondZone: Bool { didSet { defaults.set(availabilityInSecondZone, forKey: Key.availabilityInSecondZone) } }
+
+    // MARK: Invitations — dim the ones not firmly accepted and count those waiting for a reply.
+    var markUnansweredInvites: Bool { didSet { defaults.set(markUnansweredInvites, forKey: Key.markUnansweredInvites) } }
+
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         showNextEvent = defaults.object(forKey: Key.showNextEvent) as? Bool ?? true
@@ -141,7 +153,12 @@ final class PreferencesStore {
         meetingStartShortcut = defaults.string(forKey: Key.meetingStartShortcut)
         meetingEndShortcut = defaults.string(forKey: Key.meetingEndShortcut)
         meetingAutomationsVideoOnly = defaults.object(forKey: Key.meetingAutomationsVideoOnly) as? Bool ?? false
+        secondTimeZoneID = defaults.string(forKey: Key.secondTimeZoneID)
+        availabilityInSecondZone = defaults.object(forKey: Key.availabilityInSecondZone) as? Bool ?? false
+        markUnansweredInvites = defaults.object(forKey: Key.markUnansweredInvites) as? Bool ?? false
     }
+
+    var secondTimeZone: TimeZone? { secondTimeZoneID.flatMap(TimeZone.init(identifier:)) }
 
     var workingHours: WorkingHours { WorkingHours(startMinutes: workingHoursStart, endMinutes: workingHoursEnd) }
 

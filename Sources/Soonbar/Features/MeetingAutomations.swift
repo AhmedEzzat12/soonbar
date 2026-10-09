@@ -18,7 +18,7 @@ extension AppModel {
             onlyWithVideoLink: prefs.meetingAutomationsVideoOnly
         )
         let result = MeetingAutomationTracker.evaluate(
-            previous: meetingAutomationState.tracker, events: visibleEvents, now: Date(), settings: settings
+            previous: meetingAutomationState.tracker, events: activeEvents, now: Date(), settings: settings
         )
         meetingAutomationState.tracker = result.state
         let names = result.actions.compactMap { $0 == .start ? prefs.meetingStartShortcut : prefs.meetingEndShortcut }

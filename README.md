@@ -21,7 +21,8 @@ few things well and stays out of your way.
 - **Reminders:** due and overdue reminders sit in the agenda; tick them off in place (with a 2-second undo),
   click one to open it in Reminders, or right-click to push it to later (in an hour, this evening, tomorrow,
   next week).
-- **Right-click an event** to join, copy the meeting link or the details, or open it in Calendar.
+- **Right-click an event** to join, copy the meeting link or the details, open it in Calendar, or mark a meeting as
+  over when it ends early (it leaves the menu bar, and an end-of-meeting Shortcut runs).
 - **Meetings:** a Join button for Zoom, Google Meet, Teams, Webex, FaceTime and Slack links; ⌥⌘J joins the
   current meeting, opening Zoom/Teams in their desktop apps when installed.
 - **Full-screen meeting alerts:** when a meeting starts (or 1/2/5 minutes before), an alert covers every
@@ -33,6 +34,9 @@ few things well and stays out of your way.
     into a chat.
   - **Back-to-back meetings:** an orange mark on meetings with no break before them, and a menu bar that
     keeps the current meeting until it ends (`Standup · 3m left → Design review`).
+  - **Second time zone:** each meeting also shows its time there, the Today header shows the time there now, and
+    Free times can be written in that zone.
+  - **Invitations:** unanswered and "maybe" meetings are dimmed, with a count of invitations waiting for a reply.
   - **Shortcuts on meeting start/end:** run any Shortcut, e.g. one with "Set Focus" to turn on Do Not
     Disturb while you're in a meeting.
 - **Also:** hides the same meeting invited to two accounts, shows free time between today's meetings,

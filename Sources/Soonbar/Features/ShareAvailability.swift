@@ -25,7 +25,8 @@ extension AppModel {
         )
         let days = AvailabilityPlanner.days(events: events, now: now, settings: settings, calendar: calendar)
         return AvailabilityFormatter.text(
-            days, includeTimeZone: prefs.availabilityIncludeTimeZone, calendar: calendar, locale: .current
+            days, includeTimeZone: prefs.availabilityIncludeTimeZone, calendar: calendar, locale: .current,
+            displayTimeZone: prefs.availabilityInSecondZone ? prefs.secondTimeZone : nil
         )
     }
 
@@ -60,6 +61,12 @@ struct ShareAvailabilitySettingsSection: View {
                     Text("1 hour").tag(60)
                 }
                 Toggle("Include time zone", isOn: $prefs.availabilityIncludeTimeZone)
+                if let zone = prefs.secondTimeZone {
+                    Picker("Write times in", selection: $prefs.availabilityInSecondZone) {
+                        Text("My time zone").tag(false)
+                        Text(SecondTimeZone.cityName(zone)).tag(true)
+                    }
+                }
                 LabeledContent("Preview") {
                     Text(previewText)
                         .font(.callout)
@@ -94,6 +101,7 @@ struct ShareAvailabilitySettingsSection: View {
     private struct PreviewInputs: Equatable {
         let settings: AvailabilitySettings
         let includeTimeZone: Bool
+        let displayZone: String?
         let access: AccessState
         let hidden: Set<String>
         let now: Date
@@ -102,6 +110,7 @@ struct ShareAvailabilitySettingsSection: View {
         @MainActor init(model: AppModel, prefs: PreferencesStore) {
             settings = model.availabilitySettings
             includeTimeZone = prefs.availabilityIncludeTimeZone
+            displayZone = prefs.availabilityInSecondZone ? prefs.secondTimeZoneID : nil
             access = model.eventAccess
             hidden = prefs.hiddenCalendarIDs
             now = model.now
