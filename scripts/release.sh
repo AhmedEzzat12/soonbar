@@ -67,3 +67,5 @@ scripts/make-appcast.sh "$VERSION" "$BUILD_NUMBER" "$ZIP" "$NOTES"
 gh release create "$TAG" "$ZIP" build/appcast.xml \
   --target "$(git rev-parse HEAD)" --title "Soonbar $VERSION" --notes-file "$NOTES"
 echo "Published $TAG"
+echo "New or changed UI in this release? Add screenshots (sample data, not a real calendar):"
+echo "  scripts/release-screenshots.sh $VERSION <image.png> \"<caption>\" ..."

@@ -143,6 +143,10 @@ the script refuses to release unpushed code.
   Assistant → Create a Certificate → type *Code Signing*) and release with
   `SIGN_IDENTITY="<certificate name>" scripts/release.sh 1.2.0`. An Apple Developer ID ($99/year) would also
   remove the first-launch Gatekeeper step.
+- **Show new UI:** every release with new or changed UI gets screenshots on its release page,
+  `scripts/release-screenshots.sh 1.2.0 popover.png "New agenda marks" …` (run it again to replace them), or a
+  refreshed demo video (`scripts/make-demo-video.sh`) when the change is worth showing in motion. Capture with
+  sample data, never a real calendar.
 - The repository must be **public** for others to download releases and for updates to reach them.
 - **Moving installs from another feed** (e.g. a fork or the repo's previous home):
   `scripts/publish-bridge.sh <owner/repo> <InstalledName.app>` republishes the latest release there, renamed
