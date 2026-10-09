@@ -77,6 +77,17 @@ final class CalendarService {
         return store.events(matching: predicate).compactMap(Self.event)
     }
 
+    /// Like `events(in:)` but off the main thread: a store query over a few weeks can take tens of milliseconds,
+    /// which would stall the popover. EventKit allows fetching from a background thread.
+    func eventsInBackground(in interval: DateInterval) async -> [CalendarEvent] {
+        guard eventAccess == .granted else { return [] }
+        let store = store
+        return await Task.detached(priority: .userInitiated) {
+            let predicate = store.predicateForEvents(withStart: interval.start, end: interval.end, calendars: nil)
+            return store.events(matching: predicate).compactMap(Self.event)
+        }.value
+    }
+
     /// Incomplete reminders due before `end`, including overdue ones.
     func reminders(dueBefore end: Date) async -> [ReminderItem] {
         guard reminderAccess == .granted else { return [] }
@@ -143,7 +154,7 @@ final class CalendarService {
         )
     }
 
-    private static func event(_ event: EKEvent) -> CalendarEvent? {
+    private nonisolated static func event(_ event: EKEvent) -> CalendarEvent? {
         guard let identifier = event.eventIdentifier,
               let start = event.startDate, let end = event.endDate,
               let calendar = event.calendar else { return nil }
@@ -168,7 +179,7 @@ final class CalendarService {
     }
 
     /// The organizer is listed too when the server leaves them out of `attendees`.
-    private static func attendees(of event: EKEvent) -> [Attendee] {
+    private nonisolated static func attendees(of event: EKEvent) -> [Attendee] {
         var participants = event.attendees ?? []
         let organizerURL = event.organizer?.url
         if let organizer = event.organizer, !participants.contains(where: { $0.url == organizer.url }) {
@@ -185,13 +196,13 @@ final class CalendarService {
         }
     }
 
-    private static func email(from url: URL) -> String? {
+    private nonisolated static func email(from url: URL) -> String? {
         guard url.scheme?.lowercased() == "mailto" else { return nil }
         let address = String(url.absoluteString.dropFirst("mailto:".count))
         return address.removingPercentEncoding ?? address
     }
 
-    private static func status(_ status: EKParticipantStatus) -> Attendee.Status {
+    private nonisolated static func status(_ status: EKParticipantStatus) -> Attendee.Status {
         switch status {
         case .accepted: .accepted
         case .declined: .declined

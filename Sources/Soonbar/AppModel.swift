@@ -45,10 +45,11 @@ final class AppModel {
     var selectedDay: Date?
     var popoverMode: PopoverMode = .agenda
     var isPinned = false
-    /// Bumped each time the popover opens so its views start fresh (scroll position, expanded rows).
+    /// Bumped each time the popover closes; its views reset their own state on it (scroll position, expanded rows),
+    /// so the next opening starts fresh without SwiftUI rebuilding the whole popover on the click.
     private(set) var popoverSession = 0
 
-    func beginPopoverSession() {
+    func endPopoverSession() {
         popoverSession += 1
         goToToday()
     }
@@ -74,11 +75,13 @@ final class AppModel {
     func start() {
         service.onChange = { [weak self] in self?.scheduleRefresh() }
         let center = NotificationCenter.default
-        for name in [Notification.Name.NSCalendarDayChanged, .NSSystemClockDidChange, .NSSystemTimeZoneDidChange] {
+        for name in [Notification.Name.NSCalendarDayChanged, .NSSystemClockDidChange, .NSSystemTimeZoneDidChange,
+                     NSLocale.currentLocaleDidChangeNotification] {
             observers.append(center.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
                 MainActor.assumeIsolated {
                     // Foundation caches TimeZone.current (and so Calendar.current) until told otherwise.
                     NSTimeZone.resetSystemTimeZone()
+                    RelativeTime.resetFormatters()
                     self?.scheduleRefresh(delay: 0)
                 }
             })
@@ -113,7 +116,10 @@ final class AppModel {
         update(\.calendars, to: service.calendars())
         update(\.accounts, to: service.accounts())
         let interval = fetchInterval
-        update(\.events, to: service.events(in: interval))
+        let fetched = await service.eventsInBackground(in: interval)
+        // A newer refresh (another month, a change notification) was scheduled meanwhile; it fetches its own.
+        guard !Task.isCancelled else { return }
+        update(\.events, to: fetched)
         update(\.reminders, to: await service.reminders(dueBefore: interval.end))
         alertedEventIDs.formIntersection(events.map(\.id))
         endedEarlyIDs.formIntersection(events.map(\.id))

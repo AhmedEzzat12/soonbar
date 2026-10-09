@@ -27,6 +27,10 @@ struct AgendaListView: View {
                 }
                 .padding(.bottom, 8)
             }
+            .onChange(of: model.popoverSession) {
+                showEarlier = false
+                if let first = model.agenda.first?.date { proxy.scrollTo(first, anchor: .top) }
+            }
             .onChange(of: model.selectedDay) { _, day in
                 // Back to "upcoming" (Today button, T) scrolls to the top.
                 guard let target = day.map(model.calendar.startOfDay(for:)) ?? model.agenda.first?.date else { return }

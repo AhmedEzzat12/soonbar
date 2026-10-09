@@ -36,11 +36,9 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
     func show(mode: PopoverMode) {
         guard let button = statusItem.button else { return }
         if !popover.isShown {
-            // Fetching right away competes with the opening animation and re-renders the popover mid-way through
-            // it; change notifications keep the data current, so this only catches what they missed. Scheduled
-            // first so that jumping back from another month (in beginPopoverSession) still fetches at once.
+            // Change notifications keep the data current; this only catches what they missed. Delayed so that a
+            // change it finds doesn't re-render the popover mid-animation (the fetch itself runs off the main thread).
             model.scheduleRefresh(delay: 0.4)
-            model.beginPopoverSession()
         }
         model.popoverMode = mode
         NSApp.activate()
@@ -73,6 +71,7 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
         if let outsideClickMonitor { NSEvent.removeMonitor(outsideClickMonitor) }
         outsideClickMonitor = nil
         model.popoverMode = .agenda
+        model.endPopoverSession()
     }
 
     /// withObservationTracking fires once per change, so re-arm after every render.

@@ -80,6 +80,7 @@ struct EventRowView: View {
         .background(ongoing ? Color.accentColor.opacity(0.08) : Color.clear)
         .contentShape(Rectangle())
         .onTapGesture { withAnimation(.easeInOut(duration: 0.15)) { expanded.toggle() } }
+        .onChange(of: model.popoverSession) { expanded = false }
         .contextMenu {
             if let link, !event.isAllDay, event.end > model.now {
                 Button("Join \(link.provider.displayName)") { model.join(link) }

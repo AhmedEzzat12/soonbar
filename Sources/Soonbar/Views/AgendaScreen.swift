@@ -18,6 +18,7 @@ struct AgendaScreen: View {
         .focusEffectDisabled()
         .focused($focused)
         .onAppear { focused = true }
+        .onChange(of: model.popoverSession) { focused = true }
         .onKeyPress(phases: .down) { press in handle(press) }
     }
 

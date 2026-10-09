@@ -16,7 +16,6 @@ struct PopoverView: View {
             Divider()
             FooterView()
         }
-        .id(model.popoverSession)
         .frame(width: 360)
         .overlay(alignment: .bottom) {
             if let toast = model.toast {
