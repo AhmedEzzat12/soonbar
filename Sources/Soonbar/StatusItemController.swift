@@ -31,6 +31,9 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
         statusItem.button?.target = self
         statusItem.button?.action = #selector(togglePopover)
         observeModel()
+        // Build the popover's views once the first data is in, so even the first click doesn't wait for SwiftUI
+        // to create them (~100 ms); later openings only apply what changed.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { hosting.view.layoutSubtreeIfNeeded() }
     }
 
     func show(mode: PopoverMode) {
