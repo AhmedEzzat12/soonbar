@@ -100,7 +100,7 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
         button.attributedTitle = text
     }
 
-    /// A red timer sized and baseline-aligned to the menu bar font.
+    /// A red timer sized to the menu bar font.
     private static func urgentIcon(font: NSFont) -> NSTextAttachment? {
         let config = NSImage.SymbolConfiguration(pointSize: font.pointSize, weight: .semibold)
             .applying(.init(paletteColors: [.systemRed]))
@@ -109,7 +109,9 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
         image.isTemplate = false
         let attachment = NSTextAttachment()
         attachment.image = image
-        attachment.bounds = CGRect(x: 0, y: font.descender / 2, width: image.size.width, height: image.size.height)
+        // Centered on the capital letters, the usual way to line an inline icon up with text.
+        let y = ((font.capHeight - image.size.height) / 2).rounded()
+        attachment.bounds = CGRect(x: 0, y: y, width: image.size.width, height: image.size.height)
         return attachment
     }
 }
