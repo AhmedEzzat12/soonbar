@@ -11,6 +11,8 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
     private let model: AppModel
     private let prefs: PreferencesStore
     private var renderedDay = 0
+    /// Closes the popover on a click in another app or on the desktop; see `popoverDidShow`.
+    private var outsideClickMonitor: Any?
     /// AppKit leaves only ~5.5 pt between a status item's icon and its title, which looks cramped.
     /// A thin space + hair space before the title brings it to ~8.5 pt (measured), in both title styles.
     private static let iconTitleGap = "\u{2009}\u{200A}"
@@ -34,8 +36,11 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
     func show(mode: PopoverMode) {
         guard let button = statusItem.button else { return }
         if !popover.isShown {
+            // Fetching right away competes with the opening animation and re-renders the popover mid-way through
+            // it; change notifications keep the data current, so this only catches what they missed. Scheduled
+            // first so that jumping back from another month (in beginPopoverSession) still fetches at once.
+            model.scheduleRefresh(delay: 0.4)
             model.beginPopoverSession()
-            model.scheduleRefresh(delay: 0)
         }
         model.popoverMode = mode
         NSApp.activate()
@@ -53,7 +58,20 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
         if popover.isShown { close() } else { show(mode: .agenda) }
     }
 
+    func popoverDidShow(_ notification: Notification) {
+        // `.transient` should close the popover on any outside click, but it was seen to stop doing so after a
+        // context menu had been open in it. Watching clicks in other apps ourselves keeps it reliable.
+        outsideClickMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self, !self.model.isPinned else { return }
+                self.close()
+            }
+        }
+    }
+
     func popoverDidClose(_ notification: Notification) {
+        if let outsideClickMonitor { NSEvent.removeMonitor(outsideClickMonitor) }
+        outsideClickMonitor = nil
         model.popoverMode = .agenda
     }
 
@@ -73,7 +91,10 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
             button.image = CalendarIconRenderer.image(day: day)
             renderedDay = day
         }
-        popover.behavior = model.isPinned ? .applicationDefined : .transient
+        // Only when it changes: assigning it on every model change (a refresh, the minute tick) disturbed an open
+        // context menu and the popover's own outside-click tracking.
+        let behavior: NSPopover.Behavior = model.isPinned ? .applicationDefined : .transient
+        if popover.behavior != behavior { popover.behavior = behavior }
 
         guard let title = model.menuBarTitle else {
             button.title = ""
