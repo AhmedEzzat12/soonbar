@@ -103,18 +103,26 @@ final class AppModel {
     }
 
     func refresh() async {
-        eventAccess = service.eventAccess
-        reminderAccess = service.reminderAccess
-        now = Date()
-        calendars = service.calendars()
-        accounts = service.accounts()
+        // Every assignment re-renders whatever reads the value, even when it's equal, and a refresh usually finds
+        // nothing new. Assigning only what changed keeps an idle refresh from redrawing the popover.
+        update(\.eventAccess, to: service.eventAccess)
+        update(\.reminderAccess, to: service.reminderAccess)
+        // The minute ticker keeps `now` on the minute; a refresh moves it only when it has fallen behind (after sleep).
+        let current = Date()
+        if !calendar.isDate(now, equalTo: current, toGranularity: .minute) { now = current }
+        update(\.calendars, to: service.calendars())
+        update(\.accounts, to: service.accounts())
         let interval = fetchInterval
-        events = service.events(in: interval)
-        reminders = await service.reminders(dueBefore: interval.end)
+        update(\.events, to: service.events(in: interval))
+        update(\.reminders, to: await service.reminders(dueBefore: interval.end))
         alertedEventIDs.formIntersection(events.map(\.id))
         endedEarlyIDs.formIntersection(events.map(\.id))
         rescheduleMeetingAlerts()
         updateMeetingFeatures()
+    }
+
+    private func update<Value: Equatable>(_ keyPath: ReferenceWritableKeyPath<AppModel, Value>, to value: Value) {
+        if self[keyPath: keyPath] != value { self[keyPath: keyPath] = value }
     }
 
     func requestAccess() async {

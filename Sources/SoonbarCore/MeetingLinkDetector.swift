@@ -32,8 +32,12 @@ public enum MeetingLinkDetector {
         return nil
     }
 
+    /// Compiled once: every agenda row runs detection on every render, and invitation notes can be long.
+    /// NSRegularExpression is immutable and documented as safe to share between threads.
+    private nonisolated(unsafe) static let urlPattern = try? NSRegularExpression(pattern: #"https?://[^\s<>"'\)\]]+"#)
+
     public static func detect(in text: String) -> MeetingLink? {
-        guard let regex = try? NSRegularExpression(pattern: #"https?://[^\s<>"'\)\]]+"#) else { return nil }
+        guard let regex = urlPattern else { return nil }
         for match in regex.matches(in: text, range: NSRange(text.startIndex..., in: text)) {
             guard let range = Range(match.range, in: text) else { continue }
             var candidate = String(text[range])
