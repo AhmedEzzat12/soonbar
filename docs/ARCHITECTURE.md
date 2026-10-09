@@ -167,7 +167,9 @@ ones after every refresh and minute tick.
 
 - **Meeting brief** — `MeetingBriefPlanner` decides when, `MeetingBriefBuilder` what (attendees sorted organizer
   first, links from the notes minus the meeting link, trimmed notes). `MeetingBriefPanelController` shows a
-  non-activating floating panel. Attendees come from EventKit into `CalendarEvent.attendees`.
+  non-activating floating panel that a drag or two-finger swipe to the right sends away (`SwipeToDismiss` decides
+  how far it follows, how it fades and when letting go dismisses it). Attendees come from EventKit into
+  `CalendarEvent.attendees`.
 - **Share availability** — `AvailabilityPlanner` finds free slots over the next working days (via
   `FreeTimeCalculator.freeSlots(events:in:minimumMinutes:)`), `AvailabilityFormatter` writes them as text.
   It fetches its own date range because it can reach past the loaded agenda.

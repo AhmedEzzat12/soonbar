@@ -5,7 +5,33 @@ import SwiftUI
 /// Borderless, so it opts back in to key status; as a non-activating panel it takes it only when clicked,
 /// without activating the app.
 private final class BriefPanel: NSPanel {
+    /// Called with how far the fingers have moved right since a two-finger swipe began, then once when it ends.
+    var onSwipe: ((CGFloat) -> Void)?
+    var onSwipeEnd: (() -> Void)?
+    private var swipeOffset: CGFloat?
+
     override var canBecomeKey: Bool { true }
+
+    /// Nothing in the brief scrolls, so trackpad scrolling is free to mean "swipe it away", as with a notification.
+    override func sendEvent(_ event: NSEvent) {
+        guard event.type == .scrollWheel, event.hasPreciseScrollingDeltas else { return super.sendEvent(event) }
+        switch event.phase {
+        case .began:
+            swipeOffset = 0
+        case .changed:
+            guard let offset = swipeOffset else { return }
+            // Natural scrolling reports deltas the way the content moves, which is the way the fingers move.
+            let fingersRight = event.isDirectionInvertedFromDevice ? event.scrollingDeltaX : -event.scrollingDeltaX
+            swipeOffset = offset + fingersRight
+            onSwipe?(offset + fingersRight)
+        case .ended, .cancelled:
+            guard swipeOffset != nil else { return }
+            swipeOffset = nil
+            onSwipeEnd?()
+        default:
+            break // momentum after the fingers lift: the swipe has already been decided
+        }
+    }
 }
 
 /// The meeting brief: a small card in the top-right corner, just under the menu bar, on every Space.
@@ -18,11 +44,18 @@ final class MeetingBriefPanelController {
 
     private var panel: NSPanel?
     private var dismissTask: Task<Void, Never>?
+    /// Where the brief sits when it isn't being swiped.
+    private var restingOrigin = NSPoint.zero
+    /// The swipe or drag in progress: its offset, speed (points per second) and when it last moved.
+    private var slide: (offset: CGFloat, velocity: CGFloat, time: TimeInterval)?
 
     func show(_ event: CalendarEvent, model: AppModel, until dismissDate: Date?) {
         dismiss()
         let hosting = NSHostingView(rootView: MeetingBriefView(
-            event: event, brief: MeetingBriefBuilder.build(for: event), dismiss: { [weak self] in self?.dismiss() }
+            event: event, brief: MeetingBriefBuilder.build(for: event),
+            dismiss: { [weak self] in self?.dismiss() },
+            slide: { [weak self] in self?.slideChanged(to: $0) },
+            endSlide: { [weak self] in self?.slideEnded() }
         ).environment(model))
         let size = hosting.fittingSize
         hosting.frame = NSRect(origin: .zero, size: size)
@@ -48,8 +81,11 @@ final class MeetingBriefPanelController {
         panel.isReleasedWhenClosed = false
         panel.becomesKeyOnlyIfNeeded = true
         panel.contentView = background
+        panel.onSwipe = { [weak self] in self?.slideChanged(to: $0) }
+        panel.onSwipeEnd = { [weak self] in self?.slideEnded() }
         if let frame = (NSScreen.main ?? NSScreen.screens.first)?.visibleFrame {
-            panel.setFrameOrigin(NSPoint(x: frame.maxX - size.width - Self.margin, y: frame.maxY - size.height - Self.margin))
+            restingOrigin = NSPoint(x: frame.maxX - size.width - Self.margin, y: frame.maxY - size.height - Self.margin)
+            panel.setFrameOrigin(restingOrigin)
         }
         panel.orderFrontRegardless()
         panel.invalidateShadow()
@@ -66,8 +102,43 @@ final class MeetingBriefPanelController {
     func dismiss() {
         dismissTask?.cancel()
         dismissTask = nil
+        slide = nil
         panel?.orderOut(nil)
         panel = nil
+    }
+
+    // MARK: - Swipe to dismiss
+
+    /// The brief follows a drag or two-finger swipe to the right, fading as it goes.
+    private func slideChanged(to offset: CGFloat) {
+        guard let panel else { return }
+        let time = ProcessInfo.processInfo.systemUptime
+        var velocity: CGFloat = 0
+        if let last = slide, time > last.time { velocity = (offset - last.offset) / (time - last.time) }
+        slide = (offset, velocity, time)
+        panel.setFrameOrigin(NSPoint(x: restingOrigin.x + SwipeToDismiss.position(for: offset), y: restingOrigin.y))
+        panel.alphaValue = SwipeToDismiss.opacity(offset: offset, width: Self.width)
+    }
+
+    /// Far or fast enough slides off the screen and closes; otherwise springs back.
+    private func slideEnded() {
+        guard let panel, let last = slide else { return }
+        slide = nil
+        // Holding still before letting go is a drop, not a flick.
+        let velocity = ProcessInfo.processInfo.systemUptime - last.time > 0.1 ? 0 : last.velocity
+        let dismissing = SwipeToDismiss.shouldDismiss(offset: last.offset, velocity: velocity, width: Self.width)
+        let target = NSPoint(x: restingOrigin.x + (dismissing ? Self.width + Self.margin * 2 : 0), y: restingOrigin.y)
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 0.2
+            context.timingFunction = CAMediaTimingFunction(name: dismissing ? .easeIn : .easeOut)
+            panel.animator().setFrameOrigin(target)
+            panel.animator().alphaValue = dismissing ? 0 : 1
+        } completionHandler: { [weak self] in
+            MainActor.assumeIsolated {
+                // A newer brief may have replaced this one while it slid away.
+                if dismissing, let self, self.panel === panel { self.dismiss() }
+            }
+        }
     }
 
     private static let roundedMask: NSImage = {
@@ -87,7 +158,13 @@ struct MeetingBriefView: View {
     let event: CalendarEvent
     let brief: MeetingBrief
     let dismiss: () -> Void
+    /// Called with how far the pointer has moved right during a drag, then once when it's released.
+    let slide: (CGFloat) -> Void
+    let endSlide: () -> Void
     @Environment(AppModel.self) private var model
+    /// Screen x where the drag began. The panel moves under the pointer, so the gesture's own (window-relative)
+    /// translation would stay near zero; the screen position is what tracks the drag.
+    @State private var dragStartX: CGFloat?
 
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
@@ -125,6 +202,20 @@ struct MeetingBriefView: View {
         .padding(14)
         .frame(width: MeetingBriefPanelController.width, alignment: .leading)
         .fixedSize(horizontal: false, vertical: true)
+        .contentShape(Rectangle())
+        .gesture(
+            DragGesture(minimumDistance: 6)
+                .onChanged { value in
+                    let x = NSEvent.mouseLocation.x
+                    let start = dragStartX ?? x - value.translation.width
+                    dragStartX = start
+                    slide(x - start)
+                }
+                .onEnded { _ in
+                    dragStartX = nil
+                    endSlide()
+                }
+        )
     }
 
     private var header: some View {

@@ -20,6 +20,9 @@ Run `scripts/run.sh` (or `scripts/install.sh` for launch-at-login checks).
 - [ ] Arrow keys / ⌘← ⌘→ / T / ⌘P / ⌘, / ⌘N work.
 - [ ] Expanding an event shows notes as plain text with clickable links; "Open in Calendar" works.
 - [ ] Free-time rows appear today inside working hours only.
+- [ ] Opening the popover is smooth (no hitch mid-animation), including with many events.
+- [ ] Right-click an event or reminder right after opening: the menu stays open. Then click another app or the
+      desktop: the popover closes (unless pinned).
 
 ## Quick add
 - [ ] ⌥⌘N opens quick add from another app, text field focused.
@@ -35,6 +38,11 @@ Run `scripts/run.sh` (or `scripts/install.sh` for launch-at-login checks).
 ## Meetings
 - [ ] Zoom/Meet/Teams event within 15 minutes shows "Join"; Zoom opens in the Zoom app if installed.
 - [ ] ⌥⌘J joins the current meeting; with none, the popover shows "No meeting to join".
+
+## Meeting brief
+- [ ] Settings → Alerts → Preview Brief; drag it right past about a third of its width: it slides away. A short
+      drag springs back; a quick flick closes it. Two-finger swipe right on a trackpad does the same.
+- [ ] Buttons and links in the brief still work, and dragging left doesn't move it.
 
 ## Meeting alerts
 - [ ] Settings → General → Meeting alerts → Preview alert: covers every screen, Return joins, Esc dismisses.

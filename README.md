@@ -29,7 +29,7 @@ few things well and stays out of your way.
   screen with a big Join button — Return joins, Esc dismisses. Optional, with a video-calls-only filter.
 - **Optional extras** (off until you turn them on in Settings):
   - **Meeting brief:** a small panel 2–10 minutes before a meeting with who's coming (and their replies),
-    links from the invite and the notes.
+    links from the invite and the notes. Drag or swipe it to the right to close it.
   - **Free times:** a popover button that copies your open slots for the next few working days, ready to paste
     into a chat.
   - **Back-to-back meetings:** an orange mark on meetings with no break before them, and a menu bar that
