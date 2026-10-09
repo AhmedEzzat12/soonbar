@@ -28,6 +28,35 @@ import Testing
         """)
     }
 
+    @Test func timesCanBeWrittenInTheOtherPersonsZone() {
+        let settings = AvailabilitySettings(workingDays: 2, workingHours: .standard, minimumMinutes: 30)
+        let plan = AvailabilityPlanner.days(events: meetings, now: Fixture.date(2026, 10, 6, 8), settings: settings, calendar: cal)
+        let newYork = TimeZone(identifier: "America/New_York")!
+        let text = AvailabilityFormatter.text(plan, includeTimeZone: false, calendar: cal, locale: Fixture.locale, displayTimeZone: newYork)
+        #expect(text == """
+        Tue 6 Oct: 04:00–05:30, 08:00–11:00
+        Wed 7 Oct: 03:00–12:00
+        """)
+    }
+
+    @Test func otherZoneRegroupsByItsOwnDates() {
+        let settings = AvailabilitySettings(workingDays: 2, workingHours: .standard, minimumMinutes: 30)
+        let plan = AvailabilityPlanner.days(events: meetings, now: Fixture.date(2026, 10, 6, 8), settings: settings, calendar: cal)
+        let auckland = TimeZone(identifier: "Pacific/Auckland")!
+        let text = AvailabilityFormatter.text(plan, includeTimeZone: true, calendar: cal, locale: Fixture.locale, displayTimeZone: auckland)
+        let lines = text?.components(separatedBy: "\n") ?? []
+        #expect(lines.prefix(2) == ["Tue 6 Oct: 21:00–22:30", "Wed 7 Oct: 01:00–04:00, 20:00–05:00"])
+        #expect(lines.last?.hasPrefix("(times in ") == true)
+    }
+
+    @Test func sameOffsetZoneKeepsTheNormalFormat() {
+        let paris = TimeZone(identifier: "Europe/Paris")!
+        let settings = AvailabilitySettings(workingDays: 1, workingHours: .standard, minimumMinutes: 30)
+        let plan = AvailabilityPlanner.days(events: meetings, now: Fixture.date(2026, 10, 6, 8), settings: settings, calendar: cal)
+        #expect(AvailabilityFormatter.text(plan, includeTimeZone: false, calendar: cal, locale: Fixture.locale, displayTimeZone: paris)
+                == "Tue 6 Oct: 10:00–11:30, 14:00–17:00")
+    }
+
     @Test func timeZoneLineIsOptional() {
         #expect(text(meetings, now: Fixture.date(2026, 10, 6, 8), days: 1, timeZone: false) == "Tue 6 Oct: 10:00–11:30, 14:00–17:00")
     }
