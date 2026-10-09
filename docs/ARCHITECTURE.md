@@ -87,7 +87,7 @@ sequenceDiagram
 | Trigger | Why |
 |---|---|
 | `EKEventStoreChanged` (debounced 0.5 s) | Any change from any app or sync |
-| Opening the popover (after 0.4 s) | Catch anything missed while closed; delayed so the fetch doesn't stutter the opening animation |
+| Opening the popover (after 0.4 s) | Catch anything missed while closed. Events are fetched off the main thread, and the delay keeps a change it finds from re-rendering mid-animation |
 | Day change, system clock change, time-zone change | Day boundaries move (time-zone change also resets Foundation's cached zone) |
 | Wake from sleep | Timers don't fire while asleep |
 | Changing month, agenda length or first weekday | The fetched date range changes |

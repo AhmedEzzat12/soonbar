@@ -131,7 +131,8 @@ final class MeetingBriefPanelController {
         NSAnimationContext.runAnimationGroup { context in
             context.duration = 0.2
             context.timingFunction = CAMediaTimingFunction(name: dismissing ? .easeIn : .easeOut)
-            panel.animator().setFrameOrigin(target)
+            // A window's animator animates `frame`, not `setFrameOrigin`, which would just be skipped.
+            panel.animator().setFrame(NSRect(origin: target, size: panel.frame.size), display: true)
             panel.animator().alphaValue = dismissing ? 0 : 1
         } completionHandler: { [weak self] in
             MainActor.assumeIsolated {
