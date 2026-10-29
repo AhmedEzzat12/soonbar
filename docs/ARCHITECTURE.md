@@ -171,6 +171,9 @@ ones after every refresh and minute tick.
   non-activating floating panel that a drag or two-finger swipe to the right sends away (`SwipeToDismiss` decides
   how far it follows, how it fades and when letting go dismisses it). Attendees come from EventKit into
   `CalendarEvent.attendees`.
+- **Notes summaries** — with `meetingBriefSummaries` on, `NotesSummaryInput` strips links, dial-ins and invitation
+  footers, and only notes with enough text left are sent to `NotesSummarizer` (FoundationModels, run-time schema;
+  cached per event in memory). The brief marks the result as a summary and keeps the original notes a click away.
 - **Share availability** — `AvailabilityPlanner` finds free slots over the next working days (via
   `FreeTimeCalculator.freeSlots(events:in:minimumMinutes:)`), `AvailabilityFormatter` writes them as text.
   It fetches its own date range because it can reach past the loaded agenda.

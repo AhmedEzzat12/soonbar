@@ -34,6 +34,7 @@ final class PreferencesStore {
         static let meetingBriefEnabled = "meetingBriefEnabled"
         static let meetingBriefLeadMinutes = "meetingBriefLeadMinutes"
         static let meetingBriefOnlyWithAttendees = "meetingBriefOnlyWithAttendees"
+        static let meetingBriefSummaries = "meetingBriefSummaries"
         // Share availability
         static let shareAvailabilityEnabled = "shareAvailabilityEnabled"
         static let availabilityDays = "availabilityDays"
@@ -86,6 +87,8 @@ final class PreferencesStore {
     var meetingBriefEnabled: Bool { didSet { defaults.set(meetingBriefEnabled, forKey: Key.meetingBriefEnabled) } }
     var meetingBriefLeadMinutes: Int { didSet { defaults.set(meetingBriefLeadMinutes, forKey: Key.meetingBriefLeadMinutes) } }
     var meetingBriefOnlyWithAttendees: Bool { didSet { defaults.set(meetingBriefOnlyWithAttendees, forKey: Key.meetingBriefOnlyWithAttendees) } }
+    /// Long invitation notes are summarized by Apple Intelligence in the brief.
+    var meetingBriefSummaries: Bool { didSet { defaults.set(meetingBriefSummaries, forKey: Key.meetingBriefSummaries) } }
 
     // MARK: Share availability — copy upcoming free times as text.
     var shareAvailabilityEnabled: Bool { didSet { defaults.set(shareAvailabilityEnabled, forKey: Key.shareAvailabilityEnabled) } }
@@ -150,6 +153,7 @@ final class PreferencesStore {
         meetingBriefEnabled = defaults.object(forKey: Key.meetingBriefEnabled) as? Bool ?? false
         meetingBriefLeadMinutes = defaults.object(forKey: Key.meetingBriefLeadMinutes) as? Int ?? 5
         meetingBriefOnlyWithAttendees = defaults.object(forKey: Key.meetingBriefOnlyWithAttendees) as? Bool ?? true
+        meetingBriefSummaries = defaults.object(forKey: Key.meetingBriefSummaries) as? Bool ?? false
         shareAvailabilityEnabled = defaults.object(forKey: Key.shareAvailabilityEnabled) as? Bool ?? false
         availabilityDays = defaults.object(forKey: Key.availabilityDays) as? Int ?? 5
         availabilityMinMinutes = defaults.object(forKey: Key.availabilityMinMinutes) as? Int ?? 30

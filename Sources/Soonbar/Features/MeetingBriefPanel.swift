@@ -55,7 +55,9 @@ final class MeetingBriefPanelController {
             event: event, brief: MeetingBriefBuilder.build(for: event),
             dismiss: { [weak self] in self?.dismiss() },
             slide: { [weak self] in self?.slideChanged(to: $0) },
-            endSlide: { [weak self] in self?.slideEnded() }
+            endSlide: { [weak self] in self?.slideEnded() },
+            // After SwiftUI has laid out the new content (a summary arriving), not before.
+            resized: { DispatchQueue.main.async { [weak self] in self?.refit() } }
         ).environment(model))
         let size = hosting.fittingSize
         hosting.frame = NSRect(origin: .zero, size: size)
@@ -105,6 +107,16 @@ final class MeetingBriefPanelController {
         slide = nil
         panel?.orderOut(nil)
         panel = nil
+    }
+
+    /// Grows or shrinks the panel to fit its content, keeping its top edge where it is.
+    private func refit() {
+        guard let panel, slide == nil, let hosting = panel.contentView?.subviews.first else { return }
+        let size = hosting.fittingSize
+        guard size.height != panel.frame.height else { return }
+        restingOrigin.y = panel.frame.maxY - size.height
+        panel.setFrame(NSRect(origin: NSPoint(x: panel.frame.minX, y: restingOrigin.y), size: size), display: true, animate: true)
+        panel.invalidateShadow()
     }
 
     // MARK: - Swipe to dismiss
@@ -162,7 +174,12 @@ struct MeetingBriefView: View {
     /// Called with how far the pointer has moved right during a drag, then once when it's released.
     let slide: (CGFloat) -> Void
     let endSlide: () -> Void
+    /// Called when the content changes height, so the panel can follow.
+    let resized: () -> Void
     @Environment(AppModel.self) private var model
+    @State private var summary: NotesSummary?
+    @State private var summarizing = false
+    @State private var showsNotes = false
     /// Screen x where the drag began. The panel moves under the pointer, so the gesture's own (window-relative)
     /// translation would stay near zero; the screen position is what tracks the drag.
     @State private var dragStartX: CGFloat?
@@ -181,11 +198,22 @@ struct MeetingBriefView: View {
                 }
                 if !brief.attendees.isEmpty { attendees }
                 if !brief.links.isEmpty { links }
-                if let notes = brief.notes {
+                if let summary, !showsNotes {
+                    summaryView(summary)
+                } else if let notes = brief.notes {
                     Text(EventDetailView.linkified(notes))
                         .font(.callout)
                         .foregroundStyle(.secondary)
                         .lineLimit(6)
+                    if summary != nil {
+                        Button("Show summary") { showsNotes = false }.buttonStyle(.link).font(.caption)
+                    }
+                }
+                if summarizing {
+                    HStack(spacing: 6) {
+                        ProgressView().controlSize(.mini)
+                        Text("Summarizing the notes…").font(.caption).foregroundStyle(.secondary)
+                    }
                 }
                 if let link = brief.meetingLink {
                     Button {
@@ -203,6 +231,10 @@ struct MeetingBriefView: View {
         .padding(14)
         .frame(width: MeetingBriefPanelController.width, alignment: .leading)
         .fixedSize(horizontal: false, vertical: true)
+        .task { await summarize() }
+        .onChange(of: summary) { resized() }
+        .onChange(of: summarizing) { resized() }
+        .onChange(of: showsNotes) { resized() }
         .contentShape(Rectangle())
         .gesture(
             DragGesture(minimumDistance: 6)
@@ -217,6 +249,39 @@ struct MeetingBriefView: View {
                     endSlide()
                 }
         )
+    }
+
+    /// Marked as written by Apple Intelligence, with the original notes a click away.
+    private func summaryView(_ summary: NotesSummary) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Label("Summary by Apple Intelligence", systemImage: "sparkles")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Text(summary.gist).font(.callout)
+            ForEach(summary.agenda, id: \.self) { point in
+                Text("• \(point)").font(.caption).foregroundStyle(.secondary)
+            }
+            if !summary.asks.isEmpty {
+                Text("Asked of you").font(.caption.weight(.semibold)).padding(.top, 2)
+                ForEach(summary.asks, id: \.self) { ask in
+                    Label(ask, systemImage: "checkmark.circle").font(.caption)
+                }
+            }
+            if brief.notes != nil {
+                Button("Show notes") { showsNotes = true }.buttonStyle(.link).font(.caption)
+            }
+        }
+    }
+
+    private func summarize() async {
+        guard let input = NotesSummarizer.input(for: event, prefs: model.prefs) else { return }
+        if let cached = NotesSummarizer.cached(for: event, input: input) {
+            summary = cached
+            return
+        }
+        summarizing = true
+        summary = await NotesSummarizer.summary(for: event, input: input)
+        summarizing = false
     }
 
     private var header: some View {

@@ -58,7 +58,18 @@ extension AppModel {
             calendarID: writableCalendars(for: .event).first?.id ?? "preview",
             location: "Studio, 2nd floor",
             url: URL(string: "https://meet.google.com/abc-defg-hij"),
-            notes: "Goals:\n- Pick the launch date\n- Review the onboarding flow\nDeck: https://docs.northwind.io/launch-deck",
+            notes: """
+                Hi all, this is the last planning session before the launch. Goals:
+                - Pick the launch date and the fallback date
+                - Review the onboarding flow changes from last week's user tests
+                - Agree who owns the release notes and the support macros
+                Please read the launch deck before we meet and bring your team's open risks, so we can decide in the room. \
+                If you can't join, send Jane your questions by noon.
+                Deck: https://docs.northwind.io/launch-deck
+                ________________________________________________
+                Join with Google Meet: https://meet.google.com/abc-defg-hij
+                Join by phone: +1 213-555-0142 PIN: 123 456 789#
+                """,
             attendees: [
                 Attendee(name: "Jane Doe", email: "jane@bluebird.com", status: .accepted, isOrganizer: true),
                 Attendee(name: "Sam Lee", email: "sam@northwind.io", status: .tentative),
@@ -74,6 +85,7 @@ extension AppModel {
 struct MeetingBriefSettingsSection: View {
     @Environment(PreferencesStore.self) private var prefs
     @Environment(AppModel.self) private var model
+    @State private var aiStatus = AppleIntelligenceStatus.current
 
     var body: some View {
         @Bindable var prefs = prefs
@@ -85,6 +97,11 @@ struct MeetingBriefSettingsSection: View {
             .disabled(!prefs.meetingBriefEnabled)
             Toggle("Only for meetings with other people", isOn: $prefs.meetingBriefOnlyWithAttendees)
                 .disabled(!prefs.meetingBriefEnabled)
+            Toggle("Summarize long notes with Apple Intelligence", isOn: $prefs.meetingBriefSummaries)
+                .disabled(!prefs.meetingBriefEnabled || !aiStatus.isAvailable)
+            if case .unavailable(let reason) = aiStatus {
+                Text(reason).font(.caption).foregroundStyle(.secondary)
+            }
             TrailingButtons {
                 Button("Preview Brief") { model.previewMeetingBrief() }
             }
@@ -92,7 +109,8 @@ struct MeetingBriefSettingsSection: View {
             Text("Meeting brief")
         } footer: {
             SectionFooter("A small panel in the top-right corner shows who's coming, the notes and any links. "
-                          + "It never takes focus and closes a couple of minutes after the meeting starts.")
+                          + "It never takes focus and closes a couple of minutes after the meeting starts. "
+                          + "Summaries are written on this Mac and marked as such; the original notes are a click away.")
         }
         .onChange(of: prefs.meetingBriefEnabled) { _, enabled in
             // Turning the brief off also closes one that's showing.
