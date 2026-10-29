@@ -124,7 +124,7 @@ public struct QuickAddParser {
         guard let detector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.date.rawValue) else { return nil }
         let ns = text as NSString
         guard let match = detector.firstMatch(in: text, range: NSRange(location: 0, length: ns.length)),
-              let date = match.date else { return nil }
+              let date = match.date else { return weekPhrase(in: text) }
         let hasTime = Self.containsClockTime(ns.substring(with: match.range))
 
         func isDateWord(_ word: String) -> Bool {
@@ -143,14 +143,86 @@ public struct QuickAddParser {
 
         // NSDataDetector sometimes swallows neighbouring title words ("Dinner friday 7pm").
         // Peel non-date words off both edges while the rest still means the same date.
+        // "next" and "this" belong to the date ("next Tuesday") even though the date reads the same without them.
         var range = match.range
-        while let next = Self.peel(range, in: ns, fromStart: true), !isDateWord(next.word), meansSame(next.rest) {
+        while let next = Self.peel(range, in: ns, fromStart: true), !isDateWord(next.word),
+              !Self.dateQualifiers.contains(next.word.lowercased()), meansSame(next.rest) {
             range = next.rest
         }
         while let next = Self.peel(range, in: ns, fromStart: false), !isDateWord(next.word), meansSame(next.rest) {
             range = next.rest
         }
-        return DetectedDate(range: range, date: date, duration: match.duration, hasTime: hasTime)
+        let found = DetectedDate(range: range, date: date, duration: match.duration, hasTime: hasTime)
+        guard !hasTime else { return found }
+        return weekdayAndHour(found, in: ns) ?? bareHour(after: found, in: ns) ?? found
+    }
+
+    static let dateQualifiers: Set<String> = ["next", "this", "coming"]
+
+    /// "tomorrow 11" or "friday 3 with Sam": a bare hour right after a date that has no time. The number must end the
+    /// text or come before a joining word, so "tomorrow 12 boxes" stays a count.
+    func bareHour(after found: DetectedDate, in text: NSString) -> DetectedDate? {
+        let tail = NSRange(location: found.range.location + found.range.length, length: text.length - found.range.location - found.range.length)
+        let pattern = #"^\s+(\d{1,2})(?=\s*$|\s*[,.;!?]|\s+(?:for|with|at|in|to|and|on)\b)"#
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]),
+              let match = regex.firstMatch(in: text as String, range: tail),
+              let number = Int(text.substring(with: match.range(at: 1))), (1...23).contains(number),
+              let date = calendar.date(bySettingHour: Self.hour(fromBare: number), minute: 0, second: 0, of: found.date)
+        else { return nil }
+        let range = NSRange(location: found.range.location, length: match.range.location + match.range.length - found.range.location)
+        return DetectedDate(range: range, date: date, duration: 0, hasTime: true)
+    }
+
+    /// The system reads "friday 9" as "Friday the 9th", which can be weeks in the past. A past date written as a weekday and
+    /// a small number means that weekday at that hour.
+    func weekdayAndHour(_ found: DetectedDate, in text: NSString) -> DetectedDate? {
+        let phrase = text.substring(with: found.range)
+        guard found.date < calendar.startOfDay(for: now),
+              let match = Self.firstMatch(#"(?i)^([a-z]+)\s+(\d{1,2})$"#, in: phrase),
+              let word = Self.group(1, of: match, in: phrase), let numberText = Self.group(2, of: match, in: phrase),
+              let number = Int(numberText), (1...23).contains(number),
+              let weekday = Self.weekday(named: word),
+              let day = calendar.nextDate(after: calendar.startOfDay(for: now).addingTimeInterval(-1),
+                                          matching: DateComponents(weekday: weekday), matchingPolicy: .nextTime),
+              let date = calendar.date(bySettingHour: Self.hour(fromBare: number), minute: 0, second: 0, of: day)
+        else { return nil }
+        return DetectedDate(range: found.range, date: date, duration: 0, hasTime: true)
+    }
+
+    /// Hours written without am/pm: 1–6 mean the afternoon (meetings are rarely at 3 am), 7–12 the morning or noon.
+    static func hour(fromBare number: Int) -> Int { number <= 6 ? number + 12 : number }
+
+    /// Calendar weekday (1 = Sunday) for an English day name or its first three letters.
+    static func weekday(named word: String) -> Int? {
+        let names = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"]
+        let lower = word.lowercased()
+        guard lower.count >= 3 else { return nil }
+        return names.firstIndex { $0.hasPrefix(lower) || lower.hasPrefix($0) }.map { $0 + 1 }
+    }
+
+    /// Week phrases the system doesn't read: "this week" / "end of the week" (Friday, or today at the weekend),
+    /// "next week" (next Monday) and "this weekend" / "the weekend" (Saturday, or today at the weekend). Date only.
+    /// "next weekend" is left alone: people disagree on whether it means this coming weekend or the one after.
+    func weekPhrase(in text: String) -> DetectedDate? {
+        let pattern = #"(?i)\b(?:this\s+week(?!end)|end\s+of\s+(?:the\s+)?week|next\s+week(?!end)|(?<!next\s)(?:this\s+|the\s+)?weekend)\b"#
+        guard let match = Self.firstMatch(pattern, in: text) else { return nil }
+        let phrase = (text as NSString).substring(with: match.range).lowercased()
+        let today = calendar.startOfDay(for: now)
+        let weekday = calendar.component(.weekday, from: today)
+        let isWeekend = weekday == 1 || weekday == 7
+        func next(_ target: Int) -> Date? {
+            calendar.nextDate(after: today.addingTimeInterval(-1), matching: DateComponents(weekday: target), matchingPolicy: .nextTime)
+        }
+        let date: Date?
+        if phrase.hasPrefix("next") {
+            date = calendar.nextDate(after: today, matching: DateComponents(weekday: 2), matchingPolicy: .nextTime)
+        } else if phrase.hasSuffix("weekend") {
+            date = isWeekend ? today : next(7)
+        } else {
+            date = isWeekend ? today : next(6)
+        }
+        guard let date else { return nil }
+        return DetectedDate(range: match.range, date: date, duration: 0, hasTime: false)
     }
 
     /// Splits the first (or last) word off `range`; nil when `range` is a single word.

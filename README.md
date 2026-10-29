@@ -162,8 +162,11 @@ the script refuses to release unpushed code.
 | `Workshop friday from 2pm to 4pm` | Event 14:00–16:00 on Friday |
 | `Standup 9:30 #work` | Event in the calendar whose name matches `work` |
 | `!Call mom tomorrow at 6pm` | Reminder with a due time |
+| `Coffee tomorrow 11` / `Gym friday 9` | A bare hour after a day is a time (1–6 mean the afternoon) |
+| `Design review next Tuesday 3pm` | "next"/"this" stay out of the title |
+| `!Renew domain this week` / `Plan trip next week` / `Hike this weekend` | Due Friday / next Monday / Saturday |
 
-Dates are parsed with Apple's `NSDataDetector` (English phrases). Anything you edit in the form by hand stays
+Dates are parsed with Apple's `NSDataDetector` (English phrases) plus a few rules for what it misses. Anything you edit in the form by hand stays
 put while you keep typing.
 
 ## Keyboard

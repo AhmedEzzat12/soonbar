@@ -167,4 +167,85 @@ import Testing
         let reminder = draft(kind: .reminder, allDay: true, start: start, end: start)
         #expect(reminder.normalized(calendar: cal) == reminder)
     }
+
+}
+
+/// Phrases the system date detection misses.
+extension QuickAddParserTests {
+
+    /// The next date (today included) on `weekday` (1 = Sunday), at midnight.
+    func upcoming(_ weekday: Int) -> Date {
+        let start = cal.startOfDay(for: Date())
+        return cal.nextDate(after: start.addingTimeInterval(-1), matching: DateComponents(weekday: weekday), matchingPolicy: .nextTime)!
+    }
+
+    var isWeekend: Bool { [1, 7].contains(cal.component(.weekday, from: Date())) }
+
+    @Test func nextWeekdayKeepsNextOutOfTheTitle() {
+        let draft = parse("Design review next Tuesday at 3pm")
+        #expect(draft.title == "Design review")
+        #expect(cal.component(.weekday, from: draft.start) == 3)
+        #expect(cal.component(.hour, from: draft.start) == 15)
+    }
+
+    @Test func thisWeekdayKeepsThisOutOfTheTitle() {
+        #expect(parse("Pay rent this Friday").title == "Pay rent")
+    }
+
+    @Test func bareHourAfterADayIsATime() {
+        let draft = parse("Coffee tomorrow 11")
+        #expect(draft.title == "Coffee")
+        #expect(draft.start == tomorrow(11))
+        #expect(!draft.isAllDay)
+    }
+
+    @Test func bareHourBeforeAJoiningWord() {
+        let draft = parse("Meet tomorrow 11 for coffee")
+        #expect(draft.start == tomorrow(11))
+        #expect(draft.title == "Meet for coffee")
+    }
+
+    @Test func smallBareHoursMeanTheAfternoon() {
+        #expect(parse("Call tomorrow 3").start == tomorrow(15))
+        #expect(parse("Call tomorrow 12").start == tomorrow(12))
+    }
+
+    @Test func aNumberThatCountsSomethingStaysInTheTitle() {
+        let draft = parse("Order tomorrow 12 boxes")
+        #expect(draft.isAllDay)
+        #expect(draft.title == "Order 12 boxes")
+    }
+
+    @Test func weekdayAndNumberIsAnHourNotAPastDate() {
+        let draft = parse("Gym friday 9")
+        #expect(draft.start >= cal.startOfDay(for: Date()))
+        #expect(cal.component(.weekday, from: draft.start) == 6)
+        #expect(cal.component(.hour, from: draft.start) == 9)
+        #expect(draft.title == "Gym")
+    }
+
+    @Test func thisWeekIsDueFriday() {
+        let draft = parse("!Renew domain this week")
+        #expect(draft.kind == .reminder)
+        #expect(draft.title == "Renew domain")
+        #expect(!draft.hasDueTime)
+        #expect(draft.start == (isWeekend ? cal.startOfDay(for: Date()) : upcoming(6)))
+    }
+
+    @Test func nextWeekIsNextMonday() {
+        let draft = parse("Plan the trip next week")
+        #expect(draft.title == "Plan the trip")
+        #expect(draft.isAllDay)
+        #expect(draft.start == cal.nextDate(after: cal.startOfDay(for: Date()), matching: DateComponents(weekday: 2), matchingPolicy: .nextTime))
+    }
+
+    @Test func theWeekendIsSaturday() {
+        let draft = parse("Hike this weekend")
+        #expect(draft.title == "Hike")
+        #expect(draft.start == (isWeekend ? cal.startOfDay(for: Date()) : upcoming(7)))
+    }
+
+    @Test func nextWeekendIsLeftAlone() {
+        #expect(!parse("Hike next weekend").hasExplicitDate)
+    }
 }
