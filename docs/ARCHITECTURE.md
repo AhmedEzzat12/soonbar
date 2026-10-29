@@ -90,6 +90,7 @@ sequenceDiagram
 | Opening the popover (after 0.4 s) | Catch anything missed while closed. Events are fetched off the main thread, and the delay keeps a change it finds from re-rendering mid-animation |
 | Day change, system clock change, time-zone change | Day boundaries move (time-zone change also resets Foundation's cached zone) |
 | Wake from sleep | Timers don't fire while asleep |
+| Every 15 minutes | Safety net in case a change notification was missed |
 | Changing month, agenda length or first weekday | The fetched date range changes |
 | Minute ticker | Only updates `now` (no fetch) so countdowns stay exact; aligned to minute boundaries |
 

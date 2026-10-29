@@ -147,6 +147,9 @@ final class AppModel {
                 self.now = Date()
                 self.rescheduleMeetingAlerts()
                 self.updateMeetingFeatures()
+                // A safety net in case a change notification was missed: cheap, since the fetch runs off the main
+                // thread and a refresh that finds nothing new changes nothing.
+                if Calendar.current.component(.minute, from: self.now) % 15 == 0 { self.scheduleRefresh(delay: 0) }
             }
         }
     }
