@@ -69,8 +69,10 @@ public enum TextImport {
     /// Resolves each candidate's date. Ungrounded or unreadable dates leave the item without one, for the user to set.
     public static func items(from candidates: [TextImportCandidate], sourceText: String, parser: QuickAddParser) -> [TextImportItem] {
         candidates.enumerated().compactMap { index, candidate in
-            let title = QuickAddParser.cleanTitle(QuickAddParser.collapsingWhitespace(candidate.title))
-            guard !title.isEmpty else { return nil }
+            var title = QuickAddParser.cleanTitle(QuickAddParser.collapsingWhitespace(candidate.title))
+            guard let first = title.first else { return nil }
+            // Models and sentences often start lowercase ("design review"); calendar titles read better capitalized.
+            if first.isLowercase { title = first.uppercased() + title.dropFirst() }
             let phrase = candidate.when.map(QuickAddParser.collapsingWhitespace) ?? ""
             let trusted = !phrase.isEmpty && isGrounded(phrase, in: sourceText)
             // Parse the phrase on its own, so title words can't be mistaken for dates.
@@ -92,8 +94,25 @@ public enum TextImport {
         (text as NSString).enumerateSubstrings(in: NSRange(location: 0, length: (text as NSString).length), options: .bySentences) { sentence, _, _, _ in
             guard let sentence else { return }
             let ns = sentence as NSString
-            guard let match = detector.firstMatch(in: sentence, range: NSRange(location: 0, length: ns.length)) else { return }
-            var rest = QuickAddParser.removing(match.range, from: sentence)
+            // "today's call" talks about a day rather than setting one.
+            let matches = detector.matches(in: sentence, range: NSRange(location: 0, length: ns.length)).filter { match in
+                let end = match.range.location + match.range.length
+                return !(end < ns.length && ["'", "’"].contains(ns.substring(with: NSRange(location: end, length: 1))))
+            }
+            guard let match = matches.first else { return }
+            var dateRange = match.range
+            // "is on Friday …": the joining word goes with the date.
+            var before = ns.substring(to: dateRange.location)
+            while before.hasSuffix(" ") { before.removeLast() }
+            if let joiner = before.split(separator: " ").last, joiners.contains(joiner.lowercased()) {
+                let start = (before as NSString).length - (String(joiner) as NSString).length
+                dateRange = NSRange(location: start, length: dateRange.location + dateRange.length - start)
+            }
+            var rest = QuickAddParser.removing(dateRange, from: sentence)
+            for opener in openers where rest.lowercased().hasPrefix(opener) {
+                rest = String(rest.dropFirst(opener.count))
+                break
+            }
             var kind = QuickAddKind.event
             for prefix in todoPrefixes where rest.lowercased().hasPrefix(prefix) {
                 kind = .reminder
@@ -106,6 +125,10 @@ public enum TextImport {
         }
         return candidates
     }
+
+    static let joiners: Set<String> = ["on", "at", "by", "for", "from", "until", "this", "next"]
+    static let openers = ["let's ", "let’s ", "let us ", "can we ", "could we ", "shall we ", "please ", "we'll ", "we will ",
+                          "i'll ", "i will ", "also, ", "also ", "and "]
 
     static let todoPrefixes = ["remind me to ", "reminder to ", "don't forget to ", "don’t forget to ", "don't forget ", "don’t forget ", "todo: ", "to do: "]
 

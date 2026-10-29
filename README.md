@@ -37,6 +37,9 @@ few things well and stays out of your way.
   - **Second time zone:** each meeting also shows its time there, the Today header shows the time there now, and
     Free times can be written in that zone.
   - **Invitations:** unanswered and "maybe" meetings are dimmed, with a count of invitations waiting for a reply.
+  - **Add from text:** paste an email, chat or schedule into quick add's "From Text…" and tick the events and
+    reminders it finds. Read on your Mac by Apple Intelligence (macOS 26+, when it's on) or by date detection;
+    only dates that appear in the text are used, and nothing is added until you tick it.
   - **Shortcuts on meeting start/end:** run any Shortcut, e.g. one with "Set Focus" to turn on Do Not
     Disturb while you're in a meeting.
 - **Also:** hides the same meeting invited to two accounts, shows free time between today's meetings,

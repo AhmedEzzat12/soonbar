@@ -50,6 +50,12 @@ struct TextImportTests {
         #expect(!items[2].hasDate)
     }
 
+    @Test func titlesStartWithACapital() {
+        let items = TextImport.items(from: [TextImportCandidate(title: "design review", kind: .event, when: "tomorrow")],
+                                     sourceText: "design review tomorrow", parser: parser)
+        #expect(items.first?.title == "Design review")
+    }
+
     @Test func emptyTitlesAreDropped() {
         let items = TextImport.items(from: [TextImportCandidate(title: "  ", kind: .event, when: "tomorrow")],
                                      sourceText: "tomorrow", parser: parser)
@@ -64,7 +70,16 @@ struct TextImportTests {
         #expect(found[0].title == "Lunch with Sara")
         #expect(found[1].kind == .reminder)
         #expect(found[1].title.hasPrefix("pay rent"))
+        #expect(TextImport.items(from: found, sourceText: text, parser: parser)[1].title.hasPrefix("Pay rent"))
         let items = TextImport.items(from: found, sourceText: text, parser: parser)
         #expect(items.allSatisfy { $0.hasDate })
+    }
+
+    @Test func withoutAModelTitlesLoseFillerAndPossessiveDays() {
+        let text = """
+            Hi Ahmed, quick recap from today's call. Let's do the design review next Tuesday at 3pm in the Studio room.             The team dinner is on Friday Oct 30 at 7:30pm at Zooba.
+            """
+        let titles = TextImport.candidatesWithoutModel(in: text).map(\.title)
+        #expect(titles == ["do the design review in the Studio room", "The team dinner is at Zooba"])
     }
 }

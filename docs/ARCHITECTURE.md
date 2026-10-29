@@ -181,6 +181,11 @@ ones after every refresh and minute tick.
   `displayTimeZone`, `AvailabilityFormatter` regroups free slots by that zone's dates.
 - **Invitations** — `CalendarEvent.myResponse` and `InviteStatus` read the current user's reply from the attendees;
   EventKit can't send replies, so answering goes through Calendar.
+- **Add from text** — `TextImportEngine` gets candidates from Apple Intelligence (`OnDeviceTextReader`, FoundationModels
+  with a run-time `DynamicGenerationSchema`, since the `@Generable` macro needs Xcode) or from `TextImport
+  .candidatesWithoutModel` (date detection per sentence). `TextImport.items` keeps a date only when
+  `TextImport.isGrounded` finds its numbers, months, weekdays and day words close together in the text, and resolves it
+  with `QuickAddParser`. FoundationModels is weakly linked (macOS 26+), so older systems never load it.
 - **Meeting is over** — `AppModel.endedEarlyIDs` (in memory) removes a meeting from `activeEvents`, which feeds the
   menu bar title, the Join shortcut and meeting automations; the agenda keeps showing it, dimmed.
 - **Meeting automations** — `MeetingAutomationTracker` is a small state machine that merges touching meetings
