@@ -120,6 +120,8 @@ struct GeneralSettingsView: View {
                 }
             }
 
+            AddFromTextSettingsSection()
+
             Section("Updates") {
                 LabeledContent("Version", value: model.updater.version)
                 if model.updater.isEnabled {

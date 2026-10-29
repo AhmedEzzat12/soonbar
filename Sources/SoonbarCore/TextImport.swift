@@ -29,6 +29,19 @@ public struct TextImportItem: Identifiable, Sendable, Equatable {
     public var hasDueTime: Bool
     /// False when the text gave no date that could be trusted; the preview then asks for one.
     public var hasDate: Bool
+
+    public init(id: Int, title: String, kind: QuickAddKind, location: String?, isAllDay: Bool, start: Date, end: Date,
+                hasDueTime: Bool, hasDate: Bool) {
+        self.id = id
+        self.title = title
+        self.kind = kind
+        self.location = location
+        self.isAllDay = isAllDay
+        self.start = start
+        self.end = end
+        self.hasDueTime = hasDueTime
+        self.hasDate = hasDate
+    }
 }
 
 /// Turns pasted text into events and reminders to preview. Whatever finds the candidates (a language model or plain

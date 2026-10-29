@@ -10,6 +10,8 @@ struct PopoverView: View {
                 PermissionView()
             } else if model.popoverMode == .quickAdd {
                 QuickAddView()
+            } else if model.popoverMode == .addFromText {
+                AddFromTextView()
             } else {
                 AgendaScreen()
             }

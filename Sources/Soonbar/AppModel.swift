@@ -5,6 +5,7 @@ import Observation
 enum PopoverMode {
     case agenda
     case quickAdd
+    case addFromText
 }
 
 /// Single source of UI state. Raw EventKit data comes in through `refresh()`;
@@ -44,6 +45,8 @@ final class AppModel {
     /// nil = upcoming agenda; otherwise the day picked in the grid.
     var selectedDay: Date?
     var popoverMode: PopoverMode = .agenda
+    /// Text handed from quick add to Add from Text (pasting a long text into quick add offers to read it).
+    var importText = ""
     var isPinned = false
     /// Bumped each time the popover closes; its views reset their own state on it (scroll position, expanded rows),
     /// so the next opening starts fresh without SwiftUI rebuilding the whole popover on the click.

@@ -52,6 +52,9 @@ final class PreferencesStore {
         static let secondTimeZoneID = "secondTimeZoneID"
         static let availabilityInSecondZone = "availabilityInSecondZone"
         static let markUnansweredInvites = "markUnansweredInvites"
+        // Add from text
+        static let addFromTextEnabled = "addFromTextEnabled"
+        static let addFromTextUsesAI = "addFromTextUsesAI"
     }
 
     var showNextEvent: Bool { didSet { defaults.set(showNextEvent, forKey: Key.showNextEvent) } }
@@ -115,6 +118,11 @@ final class PreferencesStore {
     // MARK: Invitations — dim the ones not firmly accepted and count those waiting for a reply.
     var markUnansweredInvites: Bool { didSet { defaults.set(markUnansweredInvites, forKey: Key.markUnansweredInvites) } }
 
+    // MARK: Add from text — paste an email or chat, preview the events and reminders it mentions, add the ones you tick.
+    var addFromTextEnabled: Bool { didSet { defaults.set(addFromTextEnabled, forKey: Key.addFromTextEnabled) } }
+    /// Read the text with Apple Intelligence when it's available; otherwise (or when off) plain date detection.
+    var addFromTextUsesAI: Bool { didSet { defaults.set(addFromTextUsesAI, forKey: Key.addFromTextUsesAI) } }
+
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         showNextEvent = defaults.object(forKey: Key.showNextEvent) as? Bool ?? true
@@ -156,6 +164,8 @@ final class PreferencesStore {
         secondTimeZoneID = defaults.string(forKey: Key.secondTimeZoneID)
         availabilityInSecondZone = defaults.object(forKey: Key.availabilityInSecondZone) as? Bool ?? false
         markUnansweredInvites = defaults.object(forKey: Key.markUnansweredInvites) as? Bool ?? false
+        addFromTextEnabled = defaults.object(forKey: Key.addFromTextEnabled) as? Bool ?? false
+        addFromTextUsesAI = defaults.object(forKey: Key.addFromTextUsesAI) as? Bool ?? true
     }
 
     var secondTimeZone: TimeZone? { secondTimeZoneID.flatMap(TimeZone.init(identifier:)) }

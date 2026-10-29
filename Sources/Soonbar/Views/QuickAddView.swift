@@ -23,9 +23,22 @@ struct QuickAddView: View {
             TextField("Lunch with Sara tomorrow 1pm 1h #work", text: $text)
                 .textFieldStyle(.roundedBorder)
                 .focused($inputFocused)
-            Text("Start with ! for a reminder · #name picks a calendar")
-                .font(.caption2)
-                .foregroundStyle(.tertiary)
+            HStack {
+                Text("Start with ! for a reminder · #name picks a calendar")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+                if prefs.addFromTextEnabled {
+                    Spacer()
+                    Button("From Text…") { openAddFromText() }
+                        .buttonStyle(.link)
+                        .font(.caption)
+                }
+            }
+            if prefs.addFromTextEnabled && text.count > 80 {
+                Button("This looks like more than one item: find events in it") { openAddFromText() }
+                    .buttonStyle(.link)
+                    .font(.caption)
+            }
 
             form
 
@@ -214,6 +227,12 @@ struct QuickAddView: View {
         if !overridden.contains(.dueTime) { next.hasDueTime = parsed.hasDueTime }
         next.hasExplicitDate = parsed.hasExplicitDate
         draft = next
+    }
+
+    /// Long text pasted here is carried over, so it doesn't have to be pasted again.
+    private func openAddFromText() {
+        model.importText = text.count > 80 ? text : ""
+        model.popoverMode = .addFromText
     }
 
     private func save() {

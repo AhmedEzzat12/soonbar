@@ -95,10 +95,11 @@ final class CalendarService {
         return await Self.fetchReminders(store, predicate)
     }
 
-    func saveEvent(title: String, start: Date, end: Date, isAllDay: Bool, calendarID: String) throws {
+    func saveEvent(title: String, start: Date, end: Date, isAllDay: Bool, calendarID: String, location: String? = nil) throws {
         guard let calendar = store.calendar(withIdentifier: calendarID) else { throw CalendarServiceError.calendarNotFound }
         let event = EKEvent(eventStore: store)
         event.title = title
+        event.location = location
         event.calendar = calendar
         event.isAllDay = isAllDay
         event.startDate = start
