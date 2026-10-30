@@ -240,11 +240,13 @@ struct AlertsSettingsView: View {
         Form {
             Section {
                 Toggle("Full-screen alert when a meeting starts", isOn: $prefs.meetingAlertsEnabled)
-                Picker("Show it", selection: $prefs.meetingAlertLeadMinutes) {
-                    Text("When it starts").tag(0)
-                    Text("1 minute before").tag(1)
-                    Text("2 minutes before").tag(2)
-                    Text("5 minutes before").tag(5)
+                LabeledContent("Show it") {
+                    Menu(Self.leadSummary(prefs.meetingAlertLeadTimes)) {
+                        ForEach(Self.leadChoices, id: \.self) { minutes in
+                            Toggle(Self.leadLabel(minutes), isOn: leadBinding(minutes))
+                        }
+                    }
+                    .fixedSize()
                 }
                 .disabled(!prefs.meetingAlertsEnabled)
                 Toggle("Only for events with a video call link", isOn: $prefs.meetingAlertsVideoOnly)
@@ -255,7 +257,9 @@ struct AlertsSettingsView: View {
             } header: {
                 Text("Meeting alerts")
             } footer: {
-                SectionFooter("The alert covers every screen. Press Return to join the meeting or Esc to dismiss.")
+                SectionFooter("The alert covers every screen. Press Return to join the meeting or Esc to dismiss, or "
+                              + "have it remind you again in a few minutes. Pick several times to be alerted more than once; "
+                              + "joining from an alert stops the rest for that meeting.")
             }
 
             MeetingBriefSettingsSection()
@@ -265,6 +269,32 @@ struct AlertsSettingsView: View {
         .formStyle(.grouped)
         .onChange(of: prefs.meetingAlertSettings) { model.rescheduleMeetingAlerts() }
         .onChange(of: prefs.meetingAlertsEnabled) { model.rescheduleMeetingAlerts() }
+    }
+
+    static let leadChoices = [15, 10, 5, 2, 1, 0]
+
+    static func leadLabel(_ minutes: Int) -> String {
+        minutes == 0 ? "When it starts" : minutes == 1 ? "1 minute before" : "\(minutes) minutes before"
+    }
+
+    /// "5 min before and when it starts".
+    static func leadSummary(_ times: [Int]) -> String {
+        let parts = times.sorted(by: >).map { $0 == 0 ? "when it starts" : "\($0) min before" }
+        guard let last = parts.last else { return "Never" }
+        let text = parts.count == 1 ? last : parts.dropLast().joined(separator: ", ") + " and " + last
+        return text.prefix(1).uppercased() + text.dropFirst()
+    }
+
+    /// At least one time stays picked; turning the alert off is the toggle above.
+    private func leadBinding(_ minutes: Int) -> Binding<Bool> {
+        Binding(
+            get: { prefs.meetingAlertLeadTimes.contains(minutes) },
+            set: { on in
+                var times = Set(prefs.meetingAlertLeadTimes)
+                if on { times.insert(minutes) } else if times.count > 1 { times.remove(minutes) }
+                prefs.meetingAlertLeadTimes = times.sorted(by: >)
+            }
+        )
     }
 }
 

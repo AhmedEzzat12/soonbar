@@ -156,7 +156,9 @@ and Slack huddle links. For Zoom and Teams it also builds a native URL (`zoommtg
 
 `AppModel.rescheduleMeetingAlerts()` asks the planner which meetings are due now (alert time ≤ now, within a
 **2-minute grace** window so waking up late doesn't interrupt a meeting already under way), shows them, records
-their ids, then sleeps until the **next** alert moment. It re-plans after every refresh, minute tick and settings
+what was shown in `MeetingAlertState`, then sleeps until the **next** alert moment. Each meeting has one moment per
+chosen lead time plus an optional snooze, keyed `eventID|lead:5` / `eventID|snooze:…`, so each fires once;
+moments due together (after sleep) make one alert. Joining from an alert marks the meeting finished. It re-plans after every refresh, minute tick and settings
 change, so it always reflects current events. The alert is one borderless panel per display at screen-saver
 level, visible on every Space and over full-screen apps.
 

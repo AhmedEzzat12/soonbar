@@ -63,9 +63,21 @@ struct MeetingAlertView: View {
                 ForEach(events) { event in
                     card(for: event, isPrimary: event.id == events.first?.id)
                 }
-                Button("Dismiss") { dismiss() }
-                    .keyboardShortcut(.cancelAction)
-                    .controlSize(.large)
+                HStack(spacing: 12) {
+                    if !snoozeChoices.isEmpty {
+                        Text("Remind me in").opacity(0.75)
+                        ForEach(snoozeChoices, id: \.self) { minutes in
+                            Button("\(minutes) min") {
+                                model.snoozeMeetingAlert(events, minutes: minutes)
+                                dismiss()
+                            }
+                        }
+                        Divider().frame(height: 18).overlay(.white.opacity(0.3))
+                    }
+                    Button("Dismiss") { dismiss() }
+                        .keyboardShortcut(.cancelAction)
+                }
+                .controlSize(.large)
             }
             .foregroundStyle(.white)
             .frame(maxWidth: 680)
@@ -96,6 +108,7 @@ struct MeetingAlertView: View {
             if let link {
                 Button {
                     model.join(link)
+                    model.finishMeetingAlerts(event)
                     dismiss()
                 } label: {
                     Label("Join \(link.provider.displayName)", systemImage: "video.fill")
@@ -108,6 +121,13 @@ struct MeetingAlertView: View {
                 .keyboardShortcut(isPrimary ? .defaultAction : nil)
                 .padding(.top, 8)
             }
+        }
+    }
+
+    /// Snooze lengths that still end before every meeting in the alert does.
+    private var snoozeChoices: [Int] {
+        [1, 2, 5].filter { minutes in
+            events.allSatisfy { MeetingAlertPlanner.snoozeDate(for: $0, now: shownAt, minutes: minutes) != nil }
         }
     }
 

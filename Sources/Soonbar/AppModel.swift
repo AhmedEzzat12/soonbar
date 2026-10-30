@@ -63,7 +63,8 @@ final class AppModel {
     @ObservationIgnored private var completionTokens: [String: UUID] = [:]
     @ObservationIgnored private var observers: [NSObjectProtocol] = []
     @ObservationIgnored private var alertTask: Task<Void, Never>?
-    @ObservationIgnored private var alertedEventIDs: Set<String> = []
+    /// Alerts shown, meetings joined from an alert, and snoozes.
+    @ObservationIgnored private var alertState = MeetingAlertState()
     /// Feature state, owned by the AppModel+<Feature>.swift extensions.
     @ObservationIgnored let meetingBriefState = MeetingBriefState()
     @ObservationIgnored let meetingAutomationState = MeetingAutomationState()
@@ -124,7 +125,7 @@ final class AppModel {
         guard !Task.isCancelled else { return }
         update(\.events, to: fetched)
         update(\.reminders, to: await service.reminders(dueBefore: interval.end))
-        alertedEventIDs.formIntersection(events.map(\.id))
+        alertState.keep(eventIDs: Set(events.map(\.id)))
         endedEarlyIDs.formIntersection(events.map(\.id))
         rescheduleMeetingAlerts()
         updateMeetingFeatures()
@@ -386,19 +387,36 @@ final class AppModel {
         alertTask?.cancel()
         guard prefs.meetingAlertsEnabled, eventAccess == .granted else { return }
         let settings = prefs.meetingAlertSettings
-        let due = MeetingAlertPlanner.dueAlerts(events: visibleEvents, now: Date(), settings: settings, alreadyAlerted: alertedEventIDs)
+        let due = MeetingAlertPlanner.dueAlerts(events: visibleEvents, now: Date(), settings: settings, state: alertState)
         if !due.isEmpty {
-            alertedEventIDs.formUnion(due.map(\.id))
-            onMeetingAlert?(due)
+            for alert in due { alertState.shown.formUnion(alert.keys) }
+            onMeetingAlert?(due.map(\.event))
         }
         guard let next = MeetingAlertPlanner.nextAlertDate(
-            events: visibleEvents, now: Date(), settings: settings, alreadyAlerted: alertedEventIDs
+            events: visibleEvents, now: Date(), settings: settings, state: alertState
         ) else { return }
         alertTask = Task { [weak self] in
             try? await Task.sleep(for: .seconds(max(0, next.timeIntervalSinceNow) + 0.05))
             guard !Task.isCancelled else { return }
             self?.rescheduleMeetingAlerts()
         }
+    }
+
+    /// "Remind me in N minutes": alerts for these meetings once more, unless they'll be over by then.
+    func snoozeMeetingAlert(_ events: [CalendarEvent], minutes: Int) {
+        for event in events {
+            if let date = MeetingAlertPlanner.snoozeDate(for: event, now: Date(), minutes: minutes) {
+                alertState.snoozed[event.id] = date
+            }
+        }
+        rescheduleMeetingAlerts()
+    }
+
+    /// Joined from the alert: no more alerts for this meeting.
+    func finishMeetingAlerts(_ event: CalendarEvent) {
+        alertState.finished.insert(event.id)
+        alertState.snoozed[event.id] = nil
+        rescheduleMeetingAlerts()
     }
 
     /// Shows the alert for the next upcoming meeting (or a sample) so the look can be checked from Settings.

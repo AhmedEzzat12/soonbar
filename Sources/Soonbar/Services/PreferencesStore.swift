@@ -28,7 +28,9 @@ final class PreferencesStore {
         static let quickAddShortcut = "quickAddShortcut"
         static let joinMeetingShortcut = "joinMeetingShortcut"
         static let meetingAlertsEnabled = "meetingAlertsEnabled"
+        /// Before several alert times could be picked; read once to carry the choice over.
         static let meetingAlertLeadMinutes = "meetingAlertLeadMinutes"
+        static let meetingAlertLeadTimes = "meetingAlertLeadTimes"
         static let meetingAlertsVideoOnly = "meetingAlertsVideoOnly"
         // Meeting brief
         static let meetingBriefEnabled = "meetingBriefEnabled"
@@ -80,7 +82,8 @@ final class PreferencesStore {
     var joinMeetingShortcut: KeyCombo? { didSet { Self.saveCombo(joinMeetingShortcut, Key.joinMeetingShortcut, defaults) } }
     var meetingAlertsEnabled: Bool { didSet { defaults.set(meetingAlertsEnabled, forKey: Key.meetingAlertsEnabled) } }
     /// 0 = when the meeting starts; otherwise minutes before.
-    var meetingAlertLeadMinutes: Int { didSet { defaults.set(meetingAlertLeadMinutes, forKey: Key.meetingAlertLeadMinutes) } }
+    /// Minutes before the start for each alert; 0 = when it starts.
+    var meetingAlertLeadTimes: [Int] { didSet { defaults.set(meetingAlertLeadTimes, forKey: Key.meetingAlertLeadTimes) } }
     var meetingAlertsVideoOnly: Bool { didSet { defaults.set(meetingAlertsVideoOnly, forKey: Key.meetingAlertsVideoOnly) } }
 
     // MARK: Meeting brief — a small panel with attendees, notes and links shortly before a meeting.
@@ -147,7 +150,8 @@ final class PreferencesStore {
         quickAddShortcut = Self.loadCombo(Key.quickAddShortcut, defaults, fallback: .quickAddDefault)
         joinMeetingShortcut = Self.loadCombo(Key.joinMeetingShortcut, defaults, fallback: .joinMeetingDefault)
         meetingAlertsEnabled = defaults.object(forKey: Key.meetingAlertsEnabled) as? Bool ?? true
-        meetingAlertLeadMinutes = defaults.object(forKey: Key.meetingAlertLeadMinutes) as? Int ?? 0
+        meetingAlertLeadTimes = defaults.array(forKey: Key.meetingAlertLeadTimes) as? [Int]
+            ?? [defaults.object(forKey: Key.meetingAlertLeadMinutes) as? Int ?? 0]
         meetingAlertsVideoOnly = defaults.object(forKey: Key.meetingAlertsVideoOnly) as? Bool ?? false
         // Every feature below is off until the user turns it on.
         meetingBriefEnabled = defaults.object(forKey: Key.meetingBriefEnabled) as? Bool ?? false
@@ -177,7 +181,7 @@ final class PreferencesStore {
     var workingHours: WorkingHours { WorkingHours(startMinutes: workingHoursStart, endMinutes: workingHoursEnd) }
 
     var meetingAlertSettings: MeetingAlertSettings {
-        MeetingAlertSettings(leadMinutes: meetingAlertLeadMinutes, onlyWithVideoLink: meetingAlertsVideoOnly)
+        MeetingAlertSettings(leadMinutes: meetingAlertLeadTimes, onlyWithVideoLink: meetingAlertsVideoOnly)
     }
 
     func badge(for account: AccountInfo) -> String {

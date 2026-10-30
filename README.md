@@ -25,8 +25,9 @@ few things well and stays out of your way.
   over when it ends early (it leaves the menu bar, and an end-of-meeting Shortcut runs).
 - **Meetings:** a Join button for Zoom, Google Meet, Teams, Webex, FaceTime and Slack links; ⌥⌘J joins the
   current meeting, opening Zoom/Teams in their desktop apps when installed.
-- **Full-screen meeting alerts:** when a meeting starts (or 1/2/5 minutes before), an alert covers every
-  screen with a big Join button — Return joins, Esc dismisses. Optional, with a video-calls-only filter.
+- **Full-screen meeting alerts:** when a meeting starts, or 1–15 minutes before (pick several to be alerted more
+  than once), an alert covers every screen with a big Join button. Return joins, Esc dismisses, or "remind me in
+  1/2/5 min" brings it back. Joining stops the rest for that meeting. Optional, with a video-calls-only filter.
 - **Optional extras** (off until you turn them on in Settings):
   - **Meeting brief:** a small panel 2–10 minutes before a meeting with who's coming (and their replies),
     links from the invite and the notes. Drag or swipe it to the right to close it. Optionally, Apple Intelligence
