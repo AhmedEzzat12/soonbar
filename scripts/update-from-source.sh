@@ -11,7 +11,7 @@
 # failure or Ctrl-C — so nothing is left in the repo or on disk except the installed app.
 # Optional env:
 #   SIGN_IDENTITY  code-signing certificate name; keeps Calendar/Reminders access across rebuilds
-#                  (otherwise macOS asks again after each rebuild — see README)
+#                  (otherwise macOS asks again after each rebuild — see docs/DEVELOPMENT.md)
 #   INSTALL_DIR    where to install (default ~/Applications, no admin rights needed)
 #   NO_LAUNCH=1    don't open the app afterwards
 set -euo pipefail

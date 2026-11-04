@@ -1,205 +1,64 @@
 <p align="center"><img src="docs/icon.png" width="128" alt="Soonbar icon"></p>
 
-# Soonbar
+<h1 align="center">Soonbar</h1>
 
-A small, native macOS menu bar calendar. It shows your next event at a glance, and one click opens a month
-overview with a merged agenda of every calendar and reminder list on your Mac. Small on purpose: it does a
-few things well and stays out of your way.
+<p align="center">Your next meeting in the menu bar, and the rest of your week one click away.<br>
+A small, native calendar for macOS. Free, open source, and private.</p>
 
 ![Soonbar demo: menu bar countdown, month overview, quick add and the full-screen meeting alert](docs/demo.gif)
 
-[Watch the full-quality video](docs/demo.mp4) (37 s, 1080p).
-
-## Features
-
-- **Menu bar:** today's date icon plus the next event: `Standup · in 12m`, `Focus · 20m left`.
-- **Popover:** month grid with per-day color dots and an agenda for the next 7 days (configurable).
-- **Every account, one list:** iCloud, Google, Exchange, CalDAV — whatever is set up in
-  *System Settings → Internet Accounts*. Each row shows its calendar color and an account badge.
-- **Quick add (⌥⌘N from anywhere):** type `Lunch with Sara tomorrow 1pm 1h #work` and check the pre-filled form.
-  Start with `!` for a reminder (`!Pay rent friday`).
-- **Reminders:** due and overdue reminders sit in the agenda; tick them off in place (with a 2-second undo),
-  click one to open it in Reminders, or right-click to push it to later (in an hour, this evening, tomorrow,
-  next week).
-- **Right-click an event** to join, copy the meeting link or the details, open it in Calendar, or mark a meeting as
-  over when it ends early (it leaves the menu bar, and an end-of-meeting Shortcut runs).
-- **Meetings:** a Join button for Zoom, Google Meet, Teams, Webex, FaceTime and Slack links; ⌥⌘J joins the
-  current meeting, opening Zoom/Teams in their desktop apps when installed.
-- **Full-screen meeting alerts:** when a meeting starts, or 1–15 minutes before (pick several to be alerted more
-  than once), an alert covers every screen with a big Join button. Return joins, Esc dismisses, or "remind me in
-  1/2/5 min" brings it back. Joining stops the rest for that meeting. Optional, with a video-calls-only filter.
-- **Optional extras** (off until you turn them on in Settings):
-  - **Meeting brief:** a small panel 2–10 minutes before a meeting with who's coming (and their replies),
-    links from the invite and the notes. Drag or swipe it to the right to close it. Optionally, Apple Intelligence
-    summarizes long notes on your Mac (the gist, the agenda and what you're asked to do), marked as a summary.
-  - **Free times:** a popover button that copies your open slots for the next few working days, ready to paste
-    into a chat.
-  - **Back-to-back meetings:** an orange mark on meetings with no break before them, and a menu bar that
-    keeps the current meeting until it ends (`Standup · 3m left → Design review`).
-  - **Second time zone:** each meeting also shows its time there, the Today header shows the time there now, and
-    Free times can be written in that zone.
-  - **Invitations:** unanswered and "maybe" meetings are dimmed, with a count of invitations waiting for a reply.
-  - **Add from text:** paste an email, chat or schedule into quick add's "From Text…" and tick the events and
-    reminders it finds. Read on your Mac by Apple Intelligence (macOS 26+, when it's on) or by date detection;
-    only dates that appear in the text are used, and nothing is added until you tick it.
-  - **Shortcuts on meeting start/end:** run any Shortcut, e.g. one with "Set Focus" to turn on Do Not
-    Disturb while you're in a meeting.
-- **Also:** hides the same meeting invited to two accounts, shows free time between today's meetings,
-  keyboard navigation, launch at login, automatic updates. The popover uses macOS's native Liquid Glass; to make
-  it more opaque use *System Settings → Accessibility → Display → Reduce Transparency* (or the Liquid Glass
-  option in *Appearance* where available).
-
 ## Install
-
-**Recommended** — one command in Terminal installs the latest release into Applications and opens it:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/AhmedEzzat12/soonbar/main/scripts/install-latest.sh | bash
 ```
 
-Run the same command again any time to reinstall. After that the app updates itself
-(Settings → General → Updates). Then click the calendar icon in the menu bar → **Grant Access**.
+Then click the calendar icon in the menu bar → **Grant Access**. It updates itself from then on.
+macOS 14 or later. Other ways to install, and what to do if macOS blocks the app: **[install guide](docs/INSTALL.md)**.
 
-**Or build from source** — for Macs where downloaded apps are blocked by an organization's profile, or to
-run unreleased changes. Needs the Command Line Tools (`xcode-select --install`):
+## What it does
 
-```bash
-git clone https://github.com/AhmedEzzat12/soonbar.git
-cd soonbar
-scripts/update-from-source.sh          # latest release
-scripts/update-from-source.sh --main   # or: newest code on main
-```
+- **Your next event in the menu bar**, counting down: `Standup · in 12m`
+- **A month and an agenda** for every calendar and reminder list on your Mac, all accounts together
+- **Quick add from anywhere** (⌥⌘N): type `Lunch with Sara tomorrow 1pm`
+- **One-click Join** for Zoom, Meet, Teams and more (⌥⌘J), and a **full-screen alert** you can snooze
+- **Reminders in the agenda:** tick them off, open them, or push them to later
 
-It fast-forwards your local `main` if it's clean (otherwise leaves your working copy alone), builds in a
-temporary checkout, removes
-any installed copy, installs the new build into `~/Applications` and opens it. It cleans up after itself —
-the temporary build is deleted even if the build fails or you press Ctrl-C — so each run is a full build
-(about a minute). Your
-settings are kept. Source builds don't update themselves — run the script again to update. Each rebuild is a
-new app to macOS, so it asks for Calendar/Reminders access again unless you set `SIGN_IDENTITY` (see
-[Releasing](#releasing)).
+**Turn on what you need** in Settings:
 
-**Or download manually:** get `Soonbar.zip` from the [latest release](../../releases/latest), unzip it and
-move `Soonbar.app` to Applications. The first launch will be blocked — see below.
-
-### "Soonbar.app" Not Opened / "Apple could not verify…"
-
-The app is free and open source but not notarized by Apple (that needs a paid developer account), so macOS
-blocks copies downloaded in a browser. Any **one** of these fixes it, and you only need it once — updates
-installed by the app itself aren't blocked:
-
-1. **System Settings:** click **Done** on the warning, open **System Settings → Privacy & Security**, scroll to
-   *Security*, click **Open Anyway** next to "Soonbar.app was blocked", and confirm with your password.
-2. **Terminal:** remove the download's quarantine flag, then open the app normally:
-   ```bash
-   xattr -dr com.apple.quarantine /Applications/Soonbar.app
-   ```
-3. **Reinstall with the one-command installer above** — `curl` downloads aren't quarantined, so the warning never
-   appears.
-
-If **Open Anyway** is missing or *Allow applications from* says "configured by a profile", your Mac is managed
-by an organization; options 2 and 3 still work unless the administrator blocks unsigned apps entirely. If they
-don't, [build from source](#install) with `scripts/update-from-source.sh`.
-
-## Requirements
-
-- macOS 14 Sonoma or later, including macOS 26 Tahoe and macOS 27. Release builds are universal
-  (Apple silicon + Intel).
-- To build: a Swift 6 toolchain. Xcode is **not** required — the Command Line Tools are enough
-  (`xcode-select --install`).
-
-## Build and run
-
-```bash
-scripts/update-from-source.sh   # pull, build the latest release, replace the installed app
-scripts/run.sh          # debug build, relaunches the app from build/
-scripts/install.sh      # release build into ~/Applications (use this for launch at login)
-scripts/test.sh         # unit tests (Swift Testing)
-scripts/make-demo-video.sh      # regenerate docs/demo.mp4 and docs/demo.gif (needs ffmpeg)
-```
-
-The demo video is motion graphics, not a screen recording: `Tools/DemoVideo` draws each frame in SwiftUI from
-sample data, using the app's real `SoonbarCore` logic for the menu bar title, month grid, agenda and quick-add
-parsing. No permissions or personal data involved.
-
-On first launch, click the menu bar icon → **Grant Access** and allow Calendars and Reminders.
-
-> The app is ad-hoc signed, so macOS treats every rebuild as a new app and may ask for Calendar/Reminders
-> access again. To avoid that, create a code-signing certificate in Keychain Access and build with
-> `SIGN_IDENTITY="<certificate name>" scripts/install.sh`.
-
-## Releasing
-
-Releases are built and published from your Mac — no CI, nothing to pay for:
-
-```bash
-scripts/release.sh 1.2.0
-```
-
-It runs the tests, builds the universal app, signs the update with your Sparkle key (kept in the login
-keychain, created on first run), writes `appcast.xml`, and creates GitHub release `v1.2.0` with both files.
-Installed copies read `releases/latest/download/appcast.xml` and offer the update. Commit and push first;
-the script refuses to release unpushed code.
-
-- **Back up the signing key** once: `.build/sparkle-tools/*/bin/generate_keys -x ~/sparkle-key.txt`, then
-  store it in a password manager. Without it, installed copies can't verify future updates.
-- **Fewer permission prompts:** ad-hoc signed updates look like a new app to macOS, which asks for
-  Calendar/Reminders access again. Create a code-signing certificate once (Keychain Access → Certificate
-  Assistant → Create a Certificate → type *Code Signing*) and release with
-  `SIGN_IDENTITY="<certificate name>" scripts/release.sh 1.2.0`. An Apple Developer ID ($99/year) would also
-  remove the first-launch Gatekeeper step.
-- **Show new UI:** every release with new or changed UI gets screenshots on its release page,
-  `scripts/release-screenshots.sh 1.2.0 popover.png "New agenda marks" …` (run it again to replace them), or a
-  refreshed demo video (`scripts/make-demo-video.sh`) when the change is worth showing in motion. Capture with
-  sample data, never a real calendar.
-- The repository must be **public** for others to download releases and for updates to reach them.
-- **Moving installs from another feed** (e.g. a fork or the repo's previous home):
-  `scripts/publish-bridge.sh <owner/repo> <InstalledName.app>` republishes the latest release there, renamed
-  so Sparkle accepts it. The app renames itself to `Soonbar.app` on first launch and follows this repo from then on.
-
-## Quick add syntax
-
-| You type | You get |
+| Feature | What it does |
 |---|---|
-| `Focus block` | Event today at the next half hour, 30 minutes |
-| `Review for 45m` / `Planning 1h30m` | Event with that duration |
-| `Offsite tomorrow` | All-day event |
-| `Workshop friday from 2pm to 4pm` | Event 14:00–16:00 on Friday |
-| `Standup 9:30 #work` | Event in the calendar whose name matches `work` |
-| `!Call mom tomorrow at 6pm` | Reminder with a due time |
-| `Coffee tomorrow 11` / `Gym friday 9` | A bare hour after a day is a time (1–6 mean the afternoon) |
-| `Design review next Tuesday 3pm` | "next"/"this" stay out of the title |
-| `!Renew domain this week` / `Plan trip next week` / `Hike this weekend` | Due Friday / next Monday / Saturday |
+| **Meeting brief** | Who's coming, links and notes, just before a meeting. Apple Intelligence can sum up long notes. |
+| **Add from Text** | Paste an email or chat, tick the events and reminders in it |
+| **Free times** | Copy your open slots to share them |
+| **Second time zone** | Meeting times and a clock for another city |
+| **Back-to-back marks** | Spot meetings with no break before them |
+| **Invitations** | See which invitations you haven't answered |
+| **Shortcuts** | Run a Shortcut when a meeting starts or ends, like Do Not Disturb |
 
-Dates are parsed with Apple's `NSDataDetector` (English phrases) plus a few rules for what it misses. Anything you edit in the form by hand stays
-put while you keep typing.
+<table>
+  <tr>
+    <td><img src="docs/screenshots/agenda.png" width="250" alt="The popover with the month, agenda, a second time zone and an unanswered invitation"></td>
+    <td><img src="docs/screenshots/meeting-brief.png" width="250" alt="The meeting brief with a summary of the invitation notes"></td>
+    <td><img src="docs/screenshots/add-from-text.png" width="250" alt="Add from Text showing the events and reminders found in an email"></td>
+  </tr>
+  <tr>
+    <td align="center">Agenda</td>
+    <td align="center">Meeting brief</td>
+    <td align="center">Add from Text</td>
+  </tr>
+</table>
 
-## Keyboard
+## Private by design
 
-| Key | Action |
-|---|---|
-| ⌥⌘N | Quick add (global) |
-| ⌥⌘J | Join current meeting (global) |
-| ← → ↑ ↓ | Move the selected day |
-| ⌘← ⌘→ | Previous / next month |
-| T | Today |
-| ⌘N / ⌘, / ⌘P | New / Settings / Keep popover open |
+Soonbar uses the calendars and reminders already on your Mac. There are no accounts, servers or tracking, and
+the Apple Intelligence features run on your Mac.
 
-Global shortcuts can be changed in Settings → Shortcuts.
+## More
 
-## Documentation
+- **[Using Soonbar](docs/USAGE.md)**: quick-add phrases, keyboard shortcuts, every setting
+- **[Install guide](docs/INSTALL.md)**: download, build from source, fixing "Apple could not verify…"
+- **[How it works](docs/ARCHITECTURE.md)** · **[Developer guide](docs/DEVELOPMENT.md)** · **[Contributing](CONTRIBUTING.md)**
 
-- **[How it works](docs/ARCHITECTURE.md)**: the two layers, data flow, and how each feature works under the hood.
-- **[Developer guide](docs/DEVELOPMENT.md)**: setup, scripts, toolchain notes, debugging, and step-by-step tutorials
-  for extending the app.
-- **[Contributing](CONTRIBUTING.md)**: how to report bugs, propose features and send pull requests.
-- **[QA checklist](docs/qa-checklist.md)**: what to click through before a release.
-
-In short: every decision the UI shows (menu bar title, agenda, quick-add parsing, meeting alerts) lives in
-`Sources/SoonbarCore`, which only depends on Foundation and is unit-tested. `Sources/Soonbar` is a thin layer
-that reads EventKit and renders.
-
-## License
-
-[MIT](LICENSE) © 2026 Ahmed Ezzat. Sparkle, used for automatic updates, is distributed under its own
-[MIT-style license](https://github.com/sparkle-project/Sparkle/blob/2.x/LICENSE).
+[MIT](LICENSE) © 2026 Ahmed Ezzat. Updates use [Sparkle](https://github.com/sparkle-project/Sparkle) (MIT-style
+license).

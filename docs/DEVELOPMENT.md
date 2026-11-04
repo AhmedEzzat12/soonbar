@@ -115,7 +115,7 @@ if host == "whereby.com", path.count > 1 {
 **3. Run the tests** again; they pass.
 
 That's all. The app needs no changes: event rows, the Join button, ⌥⌘J and the full-screen alert all go through
-`MeetingLinkDetector`. Finish by adding Whereby to the provider list in the README.
+`MeetingLinkDetector`. Finish by adding Whereby to the provider list in [docs/USAGE.md](USAGE.md).
 
 ## Tutorial 2: add a setting
 
@@ -175,14 +175,29 @@ If a setting changes the **date range** the app fetches (like *Upcoming days*), 
 
 ## Releasing (maintainers)
 
+Releases are built and published from your Mac, with no CI and nothing to pay for. Commit and push first; the
+script refuses to release unpushed code.
+
 ```bash
-scripts/release.sh 1.2.0
+RELEASE_NOTES=notes.txt scripts/release.sh 1.2.0
 ```
 
-It checks that `gh` is signed in and your commits are pushed, runs the tests, builds the universal app with
-version 1.2.0 (build number = commit count), signs the update with the Sparkle key in your login keychain
-(created on first run), writes `appcast.xml` and publishes GitHub release `v1.2.0`. Installed copies update
-themselves. **Back up the signing key** once (`generate_keys -x`, see the README); losing it means installed copies
-can't verify future updates.
+It checks that `gh` is signed in, runs the tests, builds the universal app with version 1.2.0 (build number =
+commit count), signs the update with the Sparkle key in your login keychain (created on first run), writes
+`appcast.xml` and publishes GitHub release `v1.2.0`. Installed copies read `releases/latest/download/appcast.xml`
+and update themselves. Without `RELEASE_NOTES`, notes are generated from `feat:`/`fix:` commits with no scope or the
+`app` scope; for releases with several features, write them yourself.
 
-If the UI changed, re-render the demo first with `scripts/make-demo-video.sh` and commit it.
+- **Show new UI:** a release with new or changed UI gets screenshots on its page,
+  `scripts/release-screenshots.sh 1.2.0 popover.png "New agenda marks" …` (run again to replace them), or a
+  refreshed demo (`scripts/make-demo-video.sh`). Capture with sample data, never a real calendar.
+- **Back up the signing key** once: `.build/sparkle-tools/*/bin/generate_keys -x ~/sparkle-key.txt`, then keep it
+  in a password manager. Without it, installed copies can't verify future updates.
+- **Fewer permission prompts:** ad-hoc signed updates look like a new app to macOS, which asks for
+  Calendar/Reminders access again. Create a code-signing certificate once (Keychain Access → Certificate
+  Assistant → Create a Certificate → type *Code Signing*) and release with `SIGN_IDENTITY="<name>"`. An Apple
+  Developer ID ($99/year) would also remove the first-launch Gatekeeper step.
+- The repository must be **public** for downloads and updates to reach people.
+- **Moving installs from another feed** (a fork, or the repo's previous home):
+  `scripts/publish-bridge.sh <owner/repo> <InstalledName.app>` republishes the latest release there, renamed so
+  Sparkle accepts it. The app renames itself to `Soonbar.app` on first launch and follows this repo from then on.

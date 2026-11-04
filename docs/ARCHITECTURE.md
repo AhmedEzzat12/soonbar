@@ -234,7 +234,7 @@ embedded `Sparkle.framework`, then signs it (ad-hoc by default, or `SIGN_IDENTIT
 | Logic in SoonbarCore with injected `now`/`Calendar` | Deterministic, fast tests; the UI can't drift from the rules |
 | Computed derived state in `AppModel` | No caches to invalidate; Observation re-renders exactly what changed |
 | No in-app popover opacity | `NSPopover` exposes no glass control; painting over it isn't native. The popover follows macOS's Reduce Transparency setting instead |
-| Ad-hoc signing by default | No paid Apple account needed; the cost is a one-time Gatekeeper step and permission re-prompts after rebuilds (see README) |
+| Ad-hoc signing by default | No paid Apple account needed; the cost is a one-time Gatekeeper step and permission re-prompts after rebuilds (see [the install guide](INSTALL.md)) |
 
 ## Other pieces
 
