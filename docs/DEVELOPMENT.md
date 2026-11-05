@@ -193,10 +193,17 @@ and update themselves. Without `RELEASE_NOTES`, notes are generated from `feat:`
   refreshed demo (`scripts/make-demo-video.sh`). Capture with sample data, never a real calendar.
 - **Back up the signing key** once: `.build/sparkle-tools/*/bin/generate_keys -x ~/sparkle-key.txt`, then keep it
   in a password manager. Without it, installed copies can't verify future updates.
-- **Fewer permission prompts:** ad-hoc signed updates look like a new app to macOS, which asks for
-  Calendar/Reminders access again. Create a code-signing certificate once (Keychain Access → Certificate
-  Assistant → Create a Certificate → type *Code Signing*) and release with `SIGN_IDENTITY="<name>"`. An Apple
-  Developer ID ($99/year) would also remove the first-launch Gatekeeper step.
+- **Signing:** releases are signed with the *Developer ID Application* certificate in your keychain (found
+  automatically, or `SIGN_IDENTITY="<name>"`), with the hardened runtime and `Resources/Soonbar.entitlements`.
+  macOS ties the Calendar/Reminders permission to that signature (bundle ID + team), so it survives updates. The
+  script refuses to publish an ad-hoc build, which would make every user grant access again (`ALLOW_ADHOC=1` to
+  override). Back up the certificate once: Keychain Access → My Certificates → right-click → Export… → `.p12`.
+- **Notarization** (so browser downloads open without a warning): create an app-specific password at
+  appleid.apple.com → Sign-In and Security, then store it once:
+  ```bash
+  xcrun notarytool store-credentials soonbar-notary --apple-id <your Apple ID> --team-id TY4UW6A985
+  ```
+  From then on `release.sh` notarizes and staples every release. Without the profile it skips this step.
 - The repository must be **public** for downloads and updates to reach people.
 - **Moving installs from another feed** (a fork, or the repo's previous home):
   `scripts/publish-bridge.sh <owner/repo> <InstalledName.app>` republishes the latest release there, renamed so

@@ -2,7 +2,7 @@
 # Builds Soonbar and assembles a signed .app bundle in build/.
 # Usage: scripts/build-app.sh [debug|release]
 # Optional env: APP_VERSION (e.g. 1.2.0), BUILD_NUMBER (must increase for Sparkle),
-#               SPARKLE_PUBLIC_KEY (turns on auto-updates), SIGN_IDENTITY (default: ad-hoc),
+#               SPARKLE_PUBLIC_KEY (turns on auto-updates), SIGN_IDENTITY (a certificate name; default: ad-hoc),
 #               UNIVERSAL=0 (release build for this Mac's architecture only).
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -47,6 +47,21 @@ SPARKLE_FRAMEWORK="$(find "$BIN_DIR" -maxdepth 2 -name Sparkle.framework -type d
 mkdir -p "$APP/Contents/Frameworks"
 ditto "$SPARKLE_FRAMEWORK" "$APP/Contents/Frameworks/Sparkle.framework"
 
-# --deep also signs Sparkle's helpers (Autoupdate, Updater.app, XPC services) with the same identity.
-codesign --force --deep --sign "${SIGN_IDENTITY:--}" "$APP"
+IDENTITY="${SIGN_IDENTITY:--}"
+if [[ "$IDENTITY" == "-" ]]; then
+  # Ad-hoc (local builds): --deep also signs Sparkle's helpers. macOS treats every such build as a new app.
+  codesign --force --deep --sign - "$APP"
+else
+  # A real certificate keeps the signature the same across updates, so macOS keeps the Calendar and Reminders
+  # permission. Hardened runtime and a secure timestamp are what notarization requires; nested code is signed
+  # first, in the order Sparkle documents (Downloader keeps its own entitlements).
+  SIGN=(codesign --force --options runtime --timestamp --sign "$IDENTITY")
+  SPARKLE="$APP/Contents/Frameworks/Sparkle.framework/Versions/B"
+  "${SIGN[@]}" "$SPARKLE/XPCServices/Installer.xpc"
+  "${SIGN[@]}" --preserve-metadata=entitlements "$SPARKLE/XPCServices/Downloader.xpc"
+  "${SIGN[@]}" "$SPARKLE/Autoupdate"
+  "${SIGN[@]}" "$SPARKLE/Updater.app"
+  "${SIGN[@]}" "$APP/Contents/Frameworks/Sparkle.framework"
+  "${SIGN[@]}" --entitlements Resources/Soonbar.entitlements "$APP"
+fi
 echo "Built $APP"

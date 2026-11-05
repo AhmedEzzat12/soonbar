@@ -10,8 +10,10 @@
 # since the previous release — feat:/fix: with no scope or the app scope (core commits are internal building
 # blocks, so they're left out). To write your own instead:
 #   RELEASE_NOTES=notes.txt scripts/release.sh 1.2.0
-# Optional: SIGN_IDENTITY="<code-signing certificate name>" keeps one identity across updates,
-#           so macOS doesn't ask for Calendar/Reminders access again after each update.
+# Signing: uses the "Developer ID Application" certificate in your keychain (or SIGN_IDENTITY="<name>"). One stable
+# signature means macOS keeps the Calendar/Reminders permission across updates, so the script refuses to publish an
+# ad-hoc build unless ALLOW_ADHOC=1. With a notary profile (NOTARY_PROFILE, default "soonbar-notary"; see
+# docs/DEVELOPMENT.md), the app is also notarized, so copies downloaded in a browser open without a warning.
 #
 # Back up the signing key once (losing it means installed copies can't verify future updates):
 #   .build/sparkle-tools/*/bin/generate_keys -x ~/sparkle-private-key.txt   → then into a password manager
@@ -45,7 +47,36 @@ export APP_VERSION="$VERSION"
 export BUILD_NUMBER="$(git rev-list --count HEAD)"
 
 scripts/test.sh
+if [[ -z "${SIGN_IDENTITY:-}" ]]; then
+  SIGN_IDENTITY="$(security find-identity -v -p codesigning | sed -n 's/.*"\(Developer ID Application: [^"]*\)".*/\1/p' | head -1)"
+fi
+if [[ -z "$SIGN_IDENTITY" && "${ALLOW_ADHOC:-0}" != "1" ]]; then
+  echo "No Developer ID Application certificate in your keychain. An ad-hoc release makes every user grant Calendar" >&2
+  echo "and Reminders access again; set ALLOW_ADHOC=1 to release one anyway." >&2
+  exit 1
+fi
+export SIGN_IDENTITY
+echo "Signing with: ${SIGN_IDENTITY:-ad-hoc}"
 scripts/build-app.sh release
+
+# Notarize (Developer ID only), then staple the ticket so the app opens offline without asking Apple first.
+NOTARY_PROFILE="${NOTARY_PROFILE:-soonbar-notary}"
+if [[ "$SIGN_IDENTITY" == "Developer ID Application:"* ]]; then
+  if xcrun notarytool history --keychain-profile "$NOTARY_PROFILE" >/dev/null 2>&1; then
+    rm -f build/notarize.zip
+    ditto -c -k --keepParent build/Soonbar.app build/notarize.zip
+    RESULT="$(xcrun notarytool submit build/notarize.zip --keychain-profile "$NOTARY_PROFILE" --wait --output-format json)"
+    rm -f build/notarize.zip
+    if [[ "$(printf '%s' "$RESULT" | plutil -extract status raw -o - - 2>/dev/null)" != "Accepted" ]]; then
+      echo "Notarization failed: $RESULT" >&2
+      echo "Details: xcrun notarytool log <id> --keychain-profile $NOTARY_PROFILE" >&2
+      exit 1
+    fi
+    xcrun stapler staple build/Soonbar.app
+  else
+    echo "Not notarizing: no notary profile \"$NOTARY_PROFILE\" (see docs/DEVELOPMENT.md). Updates still work." >&2
+  fi
+fi
 # Stable asset name so releases/latest/download/Soonbar.zip always points at the newest build.
 ZIP="build/Soonbar.zip"
 rm -f "$ZIP"
