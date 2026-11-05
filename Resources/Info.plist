@@ -9,7 +9,7 @@
     <key>CFBundleIconFile</key>
     <string>AppIcon</string>
     <key>CFBundleIdentifier</key>
-    <string>com.ahmede.Soonbar</string>
+    <string>com.zod.soonbar</string>
     <key>CFBundleName</key>
     <string>Soonbar</string>
     <key>CFBundleDisplayName</key>

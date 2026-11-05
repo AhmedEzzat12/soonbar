@@ -10,6 +10,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         if BundleRelocator.relocateIfNeeded() { return }
+        PreferencesMigration.run()
         installMainMenu()
         prefs = PreferencesStore()
         model = AppModel(service: CalendarService(), prefs: prefs)

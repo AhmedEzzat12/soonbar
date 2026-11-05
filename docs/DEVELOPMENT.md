@@ -168,8 +168,8 @@ If a setting changes the **date range** the app fetches (like *Upcoming days*), 
   ```
 - **Re-test the permission flow** by resetting the app's privacy grants:
   ```bash
-  tccutil reset Calendar com.ahmede.Soonbar
-  tccutil reset Reminders com.ahmede.Soonbar
+  tccutil reset Calendar com.zod.soonbar
+  tccutil reset Reminders com.zod.soonbar
   ```
 - **Preview the meeting alert** any time from Settings → General → Meeting alerts → *Preview alert*.
 
