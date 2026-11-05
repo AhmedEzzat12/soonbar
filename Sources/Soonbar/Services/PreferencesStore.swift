@@ -32,6 +32,7 @@ final class PreferencesStore {
         static let meetingAlertLeadMinutes = "meetingAlertLeadMinutes"
         static let meetingAlertLeadTimes = "meetingAlertLeadTimes"
         static let meetingAlertsVideoOnly = "meetingAlertsVideoOnly"
+        static let meetingAlertAutoDismissSeconds = "meetingAlertAutoDismissSeconds"
         // Meeting brief
         static let meetingBriefEnabled = "meetingBriefEnabled"
         static let meetingBriefLeadMinutes = "meetingBriefLeadMinutes"
@@ -85,6 +86,8 @@ final class PreferencesStore {
     /// Minutes before the start for each alert; 0 = when it starts.
     var meetingAlertLeadTimes: [Int] { didSet { defaults.set(meetingAlertLeadTimes, forKey: Key.meetingAlertLeadTimes) } }
     var meetingAlertsVideoOnly: Bool { didSet { defaults.set(meetingAlertsVideoOnly, forKey: Key.meetingAlertsVideoOnly) } }
+    /// Closes the full-screen alert by itself after this long; 0 = only when dismissed.
+    var meetingAlertAutoDismissSeconds: Int { didSet { defaults.set(meetingAlertAutoDismissSeconds, forKey: Key.meetingAlertAutoDismissSeconds) } }
 
     // MARK: Meeting brief — a small panel with attendees, notes and links shortly before a meeting.
     var meetingBriefEnabled: Bool { didSet { defaults.set(meetingBriefEnabled, forKey: Key.meetingBriefEnabled) } }
@@ -153,6 +156,7 @@ final class PreferencesStore {
         meetingAlertLeadTimes = defaults.array(forKey: Key.meetingAlertLeadTimes) as? [Int]
             ?? [defaults.object(forKey: Key.meetingAlertLeadMinutes) as? Int ?? 0]
         meetingAlertsVideoOnly = defaults.object(forKey: Key.meetingAlertsVideoOnly) as? Bool ?? false
+        meetingAlertAutoDismissSeconds = defaults.object(forKey: Key.meetingAlertAutoDismissSeconds) as? Int ?? 0
         // Every feature below is off until the user turns it on.
         meetingBriefEnabled = defaults.object(forKey: Key.meetingBriefEnabled) as? Bool ?? false
         meetingBriefLeadMinutes = defaults.object(forKey: Key.meetingBriefLeadMinutes) as? Int ?? 5

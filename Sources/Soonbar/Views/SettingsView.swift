@@ -251,6 +251,15 @@ struct AlertsSettingsView: View {
                 .disabled(!prefs.meetingAlertsEnabled)
                 Toggle("Only for events with a video call link", isOn: $prefs.meetingAlertsVideoOnly)
                     .disabled(!prefs.meetingAlertsEnabled)
+                Picker("Close it automatically", selection: $prefs.meetingAlertAutoDismissSeconds) {
+                    Text("Never").tag(0)
+                    Text("After 15 seconds").tag(15)
+                    Text("After 30 seconds").tag(30)
+                    Text("After 1 minute").tag(60)
+                    Text("After 2 minutes").tag(120)
+                    Text("After 5 minutes").tag(300)
+                }
+                .disabled(!prefs.meetingAlertsEnabled)
                 TrailingButtons {
                     Button("Preview Alert") { model.previewMeetingAlert() }
                 }

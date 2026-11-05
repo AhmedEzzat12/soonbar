@@ -30,7 +30,7 @@ apps when installed (Settings → General).
 
 The full-screen alert (Settings → Alerts) covers every screen when a meeting starts, or at any of the times you
 pick before it. Return joins, Esc dismisses, and "remind me in 1/2/5 min" brings it back. Joining from the alert
-stops the rest for that meeting.
+stops the rest for that meeting. It can also close by itself after a while, showing a countdown.
 
 ## Keyboard
 
@@ -61,6 +61,7 @@ Everything below is off until you turn it on.
 | Meeting brief | Alerts | A small panel before a meeting: who's coming, links and notes. Swipe it right to close. |
 | Notes summaries | Alerts → Meeting brief | Apple Intelligence sums up long invitation notes, marked as a summary |
 | Alert times · snooze | Alerts | Alert at several times (15–1 min before, at the start); "remind me in 1/2/5 min" |
+| Close the alert automatically | Alerts | After 15 s–5 min, with a countdown on the alert |
 | Shortcuts on meetings | Alerts | Run a Shortcut when a meeting starts and ends, e.g. Do Not Disturb |
 | Add from Text | General | "From Text…" in quick add; read by Apple Intelligence or date detection |
 | Keep the current meeting | Menu Bar | `Standup · 3m left → Design review`, with a red timer near the end |

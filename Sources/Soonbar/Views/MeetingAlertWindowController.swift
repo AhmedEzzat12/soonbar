@@ -13,10 +13,13 @@ private final class AlertPanel: NSPanel {
 @MainActor
 final class MeetingAlertWindowController {
     private var panels: [NSPanel] = []
+    private var autoDismissTask: Task<Void, Never>?
 
     func show(_ events: [CalendarEvent], model: AppModel) {
         dismiss()
         guard !events.isEmpty else { return }
+        let seconds = model.prefs.meetingAlertAutoDismissSeconds
+        let closesAt = seconds > 0 ? Date().addingTimeInterval(TimeInterval(seconds)) : nil
         for screen in NSScreen.screens {
             let panel = AlertPanel(
                 contentRect: screen.frame, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false
@@ -29,7 +32,7 @@ final class MeetingAlertWindowController {
             panel.hidesOnDeactivate = false
             panel.isReleasedWhenClosed = false
             panel.contentView = NSHostingView(
-                rootView: MeetingAlertView(events: events, shownAt: Date(), dismiss: { [weak self] in self?.dismiss() })
+                rootView: MeetingAlertView(events: events, shownAt: Date(), closesAt: closesAt, dismiss: { [weak self] in self?.dismiss() })
                     .environment(model)
             )
             panel.setFrame(screen.frame, display: true)
@@ -39,9 +42,18 @@ final class MeetingAlertWindowController {
         NSApp.activate()
         (panels.first { $0.screen == NSScreen.main } ?? panels.first)?.makeKey()
         NSSound(named: "Glass")?.play()
+        guard seconds > 0 else { return }
+        // Closes as if dismissed: later alert times and snoozes for the meeting still come.
+        autoDismissTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(seconds))
+            guard !Task.isCancelled else { return }
+            self?.dismiss()
+        }
     }
 
     func dismiss() {
+        autoDismissTask?.cancel()
+        autoDismissTask = nil
         panels.forEach { $0.orderOut(nil) }
         panels.removeAll()
     }
@@ -50,6 +62,8 @@ final class MeetingAlertWindowController {
 struct MeetingAlertView: View {
     let events: [CalendarEvent]
     let shownAt: Date
+    /// When the alert closes by itself, if set to (Settings → Alerts).
+    var closesAt: Date?
     let dismiss: () -> Void
     @Environment(AppModel.self) private var model
 
@@ -78,6 +92,14 @@ struct MeetingAlertView: View {
                         .keyboardShortcut(.cancelAction)
                 }
                 .controlSize(.large)
+                if let closesAt {
+                    TimelineView(.periodic(from: shownAt, by: 1)) { context in
+                        Text("Closes in \(RelativeTime.countdown(until: closesAt, now: context.date))")
+                            .font(.callout)
+                            .monospacedDigit()
+                            .opacity(0.6)
+                    }
+                }
             }
             .foregroundStyle(.white)
             .frame(maxWidth: 680)

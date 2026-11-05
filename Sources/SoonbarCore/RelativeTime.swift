@@ -28,6 +28,13 @@ public enum RelativeTime {
         return rest == 0 ? "\(hours)h" : "\(hours)h \(rest)m"
     }
 
+    /// Time left on a short timer: "28 s" under a minute, then "1:45". Partial seconds round up, so it never shows 0
+    /// before the time is actually up.
+    public static func countdown(until date: Date, now: Date) -> String {
+        let left = max(0, Int(date.timeIntervalSince(now).rounded(.up)))
+        return left < 60 ? "\(left) s" : String(format: "%d:%02d", left / 60, left % 60)
+    }
+
     /// Formats with a locale-aware template ("jmm" follows the locale's 12/24-hour preference).
     static func format(_ date: Date, template: String, calendar: Calendar, locale: Locale) -> String {
         let key = [template, locale.identifier, "\(calendar.identifier)", calendar.timeZone.identifier,

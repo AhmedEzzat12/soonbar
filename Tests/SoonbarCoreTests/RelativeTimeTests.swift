@@ -39,4 +39,13 @@ import Testing
         #expect(RelativeTime.remaining(until: now.addingTimeInterval(8 * 60), now: now) == "8m left")
         #expect(RelativeTime.remaining(until: now.addingTimeInterval(65 * 60), now: now) == "1h 5m left")
     }
+
+    @Test func countdown() {
+        let now = Date(timeIntervalSinceReferenceDate: 0)
+        #expect(RelativeTime.countdown(until: now.addingTimeInterval(28), now: now) == "28 s")
+        #expect(RelativeTime.countdown(until: now.addingTimeInterval(27.2), now: now) == "28 s")
+        #expect(RelativeTime.countdown(until: now.addingTimeInterval(60), now: now) == "1:00")
+        #expect(RelativeTime.countdown(until: now.addingTimeInterval(105), now: now) == "1:45")
+        #expect(RelativeTime.countdown(until: now.addingTimeInterval(-3), now: now) == "0 s")
+    }
 }
