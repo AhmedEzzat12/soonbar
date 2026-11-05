@@ -14,7 +14,7 @@ curl -fsSL https://raw.githubusercontent.com/AhmedEzzat12/soonbar/main/scripts/i
 ```
 
 Then click the calendar icon in the menu bar → **Grant Access**. It updates itself from then on.
-macOS 14 or later. Other ways to install, and what to do if macOS blocks the app: **[install guide](docs/INSTALL.md)**.
+macOS 14 or later, signed and notarized by Apple. Other ways to install: **[install guide](docs/INSTALL.md)**.
 
 ## What it does
 
@@ -57,7 +57,7 @@ the Apple Intelligence features run on your Mac.
 ## More
 
 - **[Using Soonbar](docs/USAGE.md)**: quick-add phrases, keyboard shortcuts, every setting
-- **[Install guide](docs/INSTALL.md)**: download, build from source, fixing "Apple could not verify…"
+- **[Install guide](docs/INSTALL.md)**: download, or build from source
 - **[How it works](docs/ARCHITECTURE.md)** · **[Developer guide](docs/DEVELOPMENT.md)** · **[Contributing](CONTRIBUTING.md)**
 
 [MIT](LICENSE) © 2026 Ahmed Ezzat. Updates use [Sparkle](https://github.com/sparkle-project/Sparkle) (MIT-style
