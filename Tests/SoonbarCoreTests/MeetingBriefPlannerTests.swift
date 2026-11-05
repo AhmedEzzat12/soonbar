@@ -84,4 +84,25 @@ import Testing
         let settings = MeetingBriefSettings(leadMinutes: 5, onlyWithAttendees: true)
         #expect(MeetingBriefPlanner.nextMeeting(events: [ended, solo, shared], now: now, settings: settings)?.title == "Shared")
     }
+
+    // MARK: - Closing by itself
+
+    @Test func closingFollowsTheChosenRule() {
+        let start = Fixture.date(2026, 11, 5, 10, 0)
+        let event = Fixture.event("Sync", start, start.addingTimeInterval(1800))
+        let shown = start.addingTimeInterval(-300)
+        #expect(MeetingBriefClosing.twoMinutesAfterStart.closeDate(for: event, shownAt: shown) == start.addingTimeInterval(120))
+        #expect(MeetingBriefClosing.atStart.closeDate(for: event, shownAt: shown) == start)
+        #expect(MeetingBriefClosing.after30Seconds.closeDate(for: event, shownAt: shown) == shown.addingTimeInterval(30))
+        #expect(MeetingBriefClosing.after2Minutes.closeDate(for: event, shownAt: shown) == shown.addingTimeInterval(120))
+        #expect(MeetingBriefClosing.never.closeDate(for: event, shownAt: shown) == nil)
+    }
+
+    @Test func aLateBriefStaysLongEnoughToRead() {
+        // Shown after the Mac woke, a minute after the start: "when it starts" would close it at once.
+        let start = Fixture.date(2026, 11, 5, 10, 0)
+        let event = Fixture.event("Sync", start, start.addingTimeInterval(1800))
+        let late = start.addingTimeInterval(60)
+        #expect(MeetingBriefClosing.atStart.closeDate(for: event, shownAt: late) == late.addingTimeInterval(15))
+    }
 }

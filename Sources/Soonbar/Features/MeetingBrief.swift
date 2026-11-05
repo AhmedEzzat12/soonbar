@@ -32,7 +32,7 @@ extension AppModel {
         if let first = due.first {
             // Meetings due at the same moment are marked too; replacing the brief a minute later would be noise.
             state.briefedIDs.formUnion(due.map(\.id))
-            state.panel.show(first, model: self, until: MeetingBriefPlanner.dismissDate(for: first))
+            state.panel.show(first, model: self, until: prefs.meetingBriefClosing.closeDate(for: first, shownAt: Date()))
         }
         guard let next = MeetingBriefPlanner.nextBriefDate(
             events: candidates, now: Date(), settings: settings, alreadyBriefed: state.briefedIDs
@@ -48,7 +48,8 @@ extension AppModel {
     func previewMeetingBrief() {
         let now = Date()
         let upcoming = MeetingBriefPlanner.nextMeeting(events: visibleEvents, now: now, settings: prefs.meetingBriefSettings)
-        meetingBriefState.panel.show(upcoming ?? sampleBriefEvent(now: now), model: self, until: nil)
+        let event = upcoming ?? sampleBriefEvent(now: now)
+        meetingBriefState.panel.show(event, model: self, until: prefs.meetingBriefClosing.closeDate(for: event, shownAt: now))
     }
 
     private func sampleBriefEvent(now: Date) -> CalendarEvent {
@@ -102,6 +103,15 @@ struct MeetingBriefSettingsSection: View {
             if case .unavailable(let reason) = aiStatus {
                 Text(reason).font(.caption).foregroundStyle(.secondary)
             }
+            Picker("Close it", selection: $prefs.meetingBriefClosing) {
+                Text("2 minutes after the meeting starts").tag(MeetingBriefClosing.twoMinutesAfterStart)
+                Text("When the meeting starts").tag(MeetingBriefClosing.atStart)
+                Text("After 30 seconds").tag(MeetingBriefClosing.after30Seconds)
+                Text("After 1 minute").tag(MeetingBriefClosing.after1Minute)
+                Text("After 2 minutes").tag(MeetingBriefClosing.after2Minutes)
+                Text("Only when I close it").tag(MeetingBriefClosing.never)
+            }
+            .disabled(!prefs.meetingBriefEnabled)
             TrailingButtons {
                 Button("Preview Brief") { model.previewMeetingBrief() }
             }

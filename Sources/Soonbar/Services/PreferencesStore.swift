@@ -38,6 +38,7 @@ final class PreferencesStore {
         static let meetingBriefLeadMinutes = "meetingBriefLeadMinutes"
         static let meetingBriefOnlyWithAttendees = "meetingBriefOnlyWithAttendees"
         static let meetingBriefSummaries = "meetingBriefSummaries"
+        static let meetingBriefClosing = "meetingBriefClosing"
         // Share availability
         static let shareAvailabilityEnabled = "shareAvailabilityEnabled"
         static let availabilityDays = "availabilityDays"
@@ -95,6 +96,8 @@ final class PreferencesStore {
     var meetingBriefOnlyWithAttendees: Bool { didSet { defaults.set(meetingBriefOnlyWithAttendees, forKey: Key.meetingBriefOnlyWithAttendees) } }
     /// Long invitation notes are summarized by Apple Intelligence in the brief.
     var meetingBriefSummaries: Bool { didSet { defaults.set(meetingBriefSummaries, forKey: Key.meetingBriefSummaries) } }
+    /// When the brief closes by itself; 2 minutes after the start unless changed.
+    var meetingBriefClosing: MeetingBriefClosing { didSet { defaults.set(meetingBriefClosing.rawValue, forKey: Key.meetingBriefClosing) } }
 
     // MARK: Share availability — copy upcoming free times as text.
     var shareAvailabilityEnabled: Bool { didSet { defaults.set(shareAvailabilityEnabled, forKey: Key.shareAvailabilityEnabled) } }
@@ -162,6 +165,7 @@ final class PreferencesStore {
         meetingBriefLeadMinutes = defaults.object(forKey: Key.meetingBriefLeadMinutes) as? Int ?? 5
         meetingBriefOnlyWithAttendees = defaults.object(forKey: Key.meetingBriefOnlyWithAttendees) as? Bool ?? true
         meetingBriefSummaries = defaults.object(forKey: Key.meetingBriefSummaries) as? Bool ?? false
+        meetingBriefClosing = defaults.string(forKey: Key.meetingBriefClosing).flatMap(MeetingBriefClosing.init(rawValue:)) ?? .twoMinutesAfterStart
         shareAvailabilityEnabled = defaults.object(forKey: Key.shareAvailabilityEnabled) as? Bool ?? false
         availabilityDays = defaults.object(forKey: Key.availabilityDays) as? Int ?? 5
         availabilityMinMinutes = defaults.object(forKey: Key.availabilityMinMinutes) as? Int ?? 30

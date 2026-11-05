@@ -58,7 +58,7 @@ Everything below is off until you turn it on.
 
 | Feature | Where | What it does |
 |---|---|---|
-| Meeting brief | Alerts | A small panel before a meeting: who's coming, links and notes. Swipe it right to close. |
+| Meeting brief | Alerts | A small panel before a meeting: who's coming, links and notes. Swipe it right to close. It closes by itself 2 minutes after the start, or when you choose. |
 | Notes summaries | Alerts → Meeting brief | Apple Intelligence sums up long invitation notes, marked as a summary |
 | Alert times · snooze | Alerts | Alert at several times (15–1 min before, at the start); "remind me in 1/2/5 min" |
 | Close the alert automatically | Alerts | After 15 s–5 min, with a countdown on the alert |

@@ -39,10 +39,13 @@ private final class BriefPanel: NSPanel {
 @MainActor
 final class MeetingBriefPanelController {
     static let width: CGFloat = 340
+    /// Transparent space around the card, so the close button can sit on its corner like on a notification.
+    static let cardInset: CGFloat = 10
     private static let cornerRadius: CGFloat = 14
     private static let margin: CGFloat = 10
 
     private var panel: NSPanel?
+    private weak var hosting: NSView?
     private var dismissTask: Task<Void, Never>?
     /// Where the brief sits when it isn't being swiped.
     private var restingOrigin = NSPoint.zero
@@ -63,13 +66,18 @@ final class MeetingBriefPanelController {
         hosting.frame = NSRect(origin: .zero, size: size)
         hosting.autoresizingMask = [.width, .height]
 
-        // NSVisualEffectView with a mask image is how AppKit draws rounded, behind-window material.
-        let background = NSVisualEffectView(frame: hosting.frame)
+        // NSVisualEffectView with a mask image is how AppKit draws rounded, behind-window material. It's inset from the
+        // window so the close button can overlap the card's corner; the SwiftUI content sits on top of both.
+        let container = NSView(frame: hosting.frame)
+        let background = NSVisualEffectView(frame: container.bounds.insetBy(dx: Self.cardInset, dy: Self.cardInset))
         background.material = .popover
         background.blendingMode = .behindWindow
         background.state = .active
         background.maskImage = Self.roundedMask
-        background.addSubview(hosting)
+        background.autoresizingMask = [.width, .height]
+        container.addSubview(background)
+        container.addSubview(hosting)
+        self.hosting = hosting
 
         let panel = BriefPanel(
             contentRect: hosting.frame, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false
@@ -82,11 +90,13 @@ final class MeetingBriefPanelController {
         panel.hidesOnDeactivate = false
         panel.isReleasedWhenClosed = false
         panel.becomesKeyOnlyIfNeeded = true
-        panel.contentView = background
+        panel.contentView = container
         panel.onSwipe = { [weak self] in self?.slideChanged(to: $0) }
         panel.onSwipeEnd = { [weak self] in self?.slideEnded() }
         if let frame = (NSScreen.main ?? NSScreen.screens.first)?.visibleFrame {
-            restingOrigin = NSPoint(x: frame.maxX - size.width - Self.margin, y: frame.maxY - size.height - Self.margin)
+            // The card, not the window with its transparent inset, keeps `margin` from the screen's edges.
+            restingOrigin = NSPoint(x: frame.maxX - size.width - Self.margin + Self.cardInset,
+                                    y: frame.maxY - size.height - Self.margin + Self.cardInset)
             panel.setFrameOrigin(restingOrigin)
         }
         panel.orderFrontRegardless()
@@ -111,7 +121,7 @@ final class MeetingBriefPanelController {
 
     /// Grows or shrinks the panel to fit its content, keeping its top edge where it is.
     private func refit() {
-        guard let panel, slide == nil, let hosting = panel.contentView?.subviews.first else { return }
+        guard let panel, slide == nil, let hosting else { return }
         let size = hosting.fittingSize
         guard size.height != panel.frame.height else { return }
         restingOrigin.y = panel.frame.maxY - size.height
@@ -223,8 +233,7 @@ struct MeetingBriefView: View {
                         Label("Join \(link.provider.displayName)", systemImage: "video.fill")
                             .frame(maxWidth: .infinity)
                     }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.large)
+                    .buttonStyle(JoinButtonStyle())
                 }
             }
         }
@@ -249,6 +258,24 @@ struct MeetingBriefView: View {
                     endSlide()
                 }
         )
+        .padding(MeetingBriefPanelController.cardInset)
+        // On the card's top-left corner, half outside it, like the close button on a notification.
+        .overlay(alignment: .topLeading) { closeButton }
+    }
+
+    private var closeButton: some View {
+        Button(action: dismiss) {
+            Image(systemName: "xmark")
+                .font(.system(size: 9, weight: .bold))
+                .foregroundStyle(.secondary)
+                .frame(width: 2 * MeetingBriefPanelController.cardInset, height: 2 * MeetingBriefPanelController.cardInset)
+                .background(Circle().fill(Color(nsColor: .windowBackgroundColor)))
+                .overlay(Circle().strokeBorder(Color.primary.opacity(0.15)))
+                .shadow(color: .black.opacity(0.18), radius: 2, y: 1)
+        }
+        .buttonStyle(.plain)
+        .help("Close")
+        .accessibilityLabel("Close")
     }
 
     /// Marked as written by Apple Intelligence, with the original notes a click away.
@@ -298,16 +325,6 @@ struct MeetingBriefView: View {
                 }
             }
             Spacer(minLength: 0)
-            Button(action: dismiss) {
-                Image(systemName: "xmark")
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundStyle(.secondary)
-                    .frame(width: 20, height: 20)
-                    .background(.quaternary, in: Circle())
-            }
-            .buttonStyle(.plain)
-            .help("Close")
-            .accessibilityLabel("Close")
         }
     }
 
@@ -384,5 +401,19 @@ struct MeetingBriefView: View {
         case .pending: "Hasn't responded"
         case .unknown: "Response unknown"
         }
+    }
+}
+
+/// A solid accent-coloured button. The brief never becomes the active window, where the system's prominent style would
+/// draw grey, but Join is the main thing to do with it.
+private struct JoinButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.body.weight(.semibold))
+            .foregroundStyle(.white)
+            .padding(.vertical, 8)
+            .frame(maxWidth: .infinity)
+            .background(RoundedRectangle(cornerRadius: 8).fill(Color.accentColor.opacity(configuration.isPressed ? 0.75 : 1)))
+            .contentShape(RoundedRectangle(cornerRadius: 8))
     }
 }
