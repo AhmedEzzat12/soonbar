@@ -173,6 +173,17 @@ If a setting changes the **date range** the app fetches (like *Upcoming days*), 
   ```
 - **Preview the meeting alert** any time from Settings → General → Meeting alerts → *Preview alert*.
 
+## Usage numbers (maintainers)
+
+- **Without telemetry:** `scripts/usage-stats.sh` reads GitHub's download counts: zip downloads (installs and
+  updates) and appcast fetches (each running copy checks about once a day). It keeps a history in
+  `~/Library/Application Support/Soonbar Dev/usage-history.csv`; run it daily for a trend.
+- **TelemetryDeck** (`Services/UsageStatistics.swift`): active users, versions, macOS, which optional features are on
+  (`Settings.daily`, once a day) and crash summaries from MetricKit (`App.crashed`). It sends nothing until
+  `TelemetryDeckAppID` in `Resources/Info.plist` holds the app's ID from telemetrydeck.com, or when the user turns
+  it off. Builds without the update key (source and `run.sh` builds) are marked as test data. Keep the README's
+  privacy paragraph and the Settings footer in line with what's sent.
+
 ## Releasing (maintainers)
 
 Releases are built and published from your Mac, with no CI and nothing to pay for. Commit and push first; the

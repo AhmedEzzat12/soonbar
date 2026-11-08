@@ -70,5 +70,9 @@ Everything below is off until you turn it on.
 | Invitations | Calendar | Dims unanswered and "maybe" meetings and counts invitations waiting for you |
 | Free times | Calendar | A popover button that copies your open slots for the next working days |
 
+**Privacy** (Settings → General): anonymous usage statistics are on unless you turn them off. They're the app and
+macOS version, Mac model, language and region, which optional features are on, and a short summary if Soonbar
+crashes, counted under a random ID. Never your calendars, reminders, names or anything you type.
+
 The popover uses macOS's Liquid Glass. To make it more opaque, turn on *System Settings → Accessibility →
 Display → Reduce Transparency*.

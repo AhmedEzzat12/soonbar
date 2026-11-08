@@ -122,6 +122,18 @@ struct GeneralSettingsView: View {
 
             AddFromTextSettingsSection()
 
+            Section {
+                Toggle("Share anonymous usage statistics", isOn: $prefs.shareUsageStatistics)
+            } header: {
+                Text("Privacy")
+            } footer: {
+                SectionFooter("Helps the developer see how many Macs run Soonbar, which versions, which optional features "
+                              + "are on, and when it crashes. Sends the app and macOS version, Mac model, language and region, "
+                              + "never your calendars, reminders, names or anything you type. Your Mac is counted under a "
+                              + "random anonymous ID (TelemetryDeck).")
+            }
+            .onChange(of: prefs.shareUsageStatistics) { UsageStatistics.shared.apply(prefs) }
+
             Section("Updates") {
                 LabeledContent("Version", value: model.updater.version)
                 if model.updater.isEnabled {

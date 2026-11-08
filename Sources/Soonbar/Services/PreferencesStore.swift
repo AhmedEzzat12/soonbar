@@ -60,6 +60,7 @@ final class PreferencesStore {
         // Add from text
         static let addFromTextEnabled = "addFromTextEnabled"
         static let addFromTextUsesAI = "addFromTextUsesAI"
+        static let shareUsageStatistics = "shareUsageStatistics"
     }
 
     var showNextEvent: Bool { didSet { defaults.set(showNextEvent, forKey: Key.showNextEvent) } }
@@ -135,6 +136,9 @@ final class PreferencesStore {
     /// Read the text with Apple Intelligence when it's available; otherwise (or when off) plain date detection.
     var addFromTextUsesAI: Bool { didSet { defaults.set(addFromTextUsesAI, forKey: Key.addFromTextUsesAI) } }
 
+    // MARK: Privacy — anonymous usage statistics (see UsageStatistics); on unless turned off.
+    var shareUsageStatistics: Bool { didSet { defaults.set(shareUsageStatistics, forKey: Key.shareUsageStatistics) } }
+
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         showNextEvent = defaults.object(forKey: Key.showNextEvent) as? Bool ?? true
@@ -182,6 +186,7 @@ final class PreferencesStore {
         markUnansweredInvites = defaults.object(forKey: Key.markUnansweredInvites) as? Bool ?? false
         addFromTextEnabled = defaults.object(forKey: Key.addFromTextEnabled) as? Bool ?? false
         addFromTextUsesAI = defaults.object(forKey: Key.addFromTextUsesAI) as? Bool ?? true
+        shareUsageStatistics = defaults.object(forKey: Key.shareUsageStatistics) as? Bool ?? true
     }
 
     var secondTimeZone: TimeZone? { secondTimeZoneID.flatMap(TimeZone.init(identifier:)) }

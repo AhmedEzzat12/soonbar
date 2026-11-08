@@ -42,6 +42,11 @@ if [[ -n "${SPARKLE_PUBLIC_KEY:-}" ]]; then
   /usr/libexec/PlistBuddy -c "Add :SUPublicEDKey string $SPARKLE_PUBLIC_KEY" "$PLIST"
 fi
 
+# Resource bundles from packages (TelemetryDeck's privacy manifest, which the App Store requires apps to ship).
+for bundle in "$BIN_DIR"/*.bundle; do
+  [[ -d "$bundle" ]] && ditto "$bundle" "$APP/Contents/Resources/$(basename "$bundle")"
+done
+
 # Embed Sparkle (the binary's rpath points at Contents/Frameworks).
 SPARKLE_FRAMEWORK="$(find "$BIN_DIR" -maxdepth 2 -name Sparkle.framework -type d | head -1)"
 mkdir -p "$APP/Contents/Frameworks"

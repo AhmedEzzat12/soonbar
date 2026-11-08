@@ -13,6 +13,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         PreferencesMigration.run()
         installMainMenu()
         prefs = PreferencesStore()
+        UsageStatistics.shared.apply(prefs)
+        NotificationCenter.default.addObserver(forName: .NSCalendarDayChanged, object: nil, queue: .main) { _ in
+            MainActor.assumeIsolated { UsageStatistics.shared.sendDailySnapshot() }
+        }
         model = AppModel(service: CalendarService(), prefs: prefs)
         statusController = StatusItemController(model: model, prefs: prefs)
 

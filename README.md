@@ -51,8 +51,10 @@ macOS 14 or later, signed and notarized by Apple. Other ways to install: **[inst
 
 ## Private by design
 
-Soonbar uses the calendars and reminders already on your Mac. There are no accounts, servers or tracking, and
-the Apple Intelligence features run on your Mac.
+Soonbar uses the calendars and reminders already on your Mac: no accounts, and your calendar data never leaves
+your Mac. The Apple Intelligence features run on your Mac too. To see how many people use it and catch crashes,
+Soonbar sends anonymous usage statistics (versions, which features are on, crash summaries, never your data),
+which you can turn off in Settings → General → Privacy.
 
 ## More
 

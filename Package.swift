@@ -7,12 +7,18 @@ let package = Package(
     dependencies: [
         // Auto-updates (appcast + EdDSA-signed zips on GitHub Releases).
         .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.10.0"),
+        // Anonymous usage statistics (Settings → General → Privacy; on unless turned off).
+        .package(url: "https://github.com/TelemetryDeck/SwiftSDK", from: "2.14.2"),
     ],
     targets: [
         .target(name: "SoonbarCore"),
         .executableTarget(
             name: "Soonbar",
-            dependencies: ["SoonbarCore", .product(name: "Sparkle", package: "Sparkle")],
+            dependencies: [
+                "SoonbarCore",
+                .product(name: "Sparkle", package: "Sparkle"),
+                .product(name: "TelemetryDeck", package: "SwiftSDK"),
+            ],
             swiftSettings: [.swiftLanguageMode(.v5)],
             // Sparkle.framework is embedded in Contents/Frameworks by scripts/build-app.sh.
             linkerSettings: [.unsafeFlags(["-Xlinker", "-rpath", "-Xlinker", "@executable_path/../Frameworks"])]

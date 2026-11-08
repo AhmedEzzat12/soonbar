@@ -218,6 +218,13 @@ that file name or the same bundle identifier. `BundleRelocator` runs first thing
 named `<CFBundleName>.app` it renames itself (keeping the newer copy if both exist) and relaunches. Together with
 `scripts/publish-bridge.sh` this moves installs that follow another feed over without a reinstall.
 
+### Usage statistics — `UsageStatistics`
+
+TelemetryDeck (anonymous user hash, no IPs stored) receives a session signal per launch, a daily `Settings.daily`
+snapshot of which optional features are on, and `App.crashed` summaries (version, exception type, signal) from
+MetricKit's crash diagnostics, which macOS delivers on a later launch. Nothing is sent without an App ID in
+Info.plist or when Settings → General → Privacy is off.
+
 ## Packaging
 
 There is no Xcode project. `scripts/build-app.sh` builds with SwiftPM and assembles the `.app` by hand: binary,
