@@ -66,13 +66,15 @@ public enum MeetingBriefClosing: String, CaseIterable, Sendable {
     case after30Seconds
     case after1Minute
     case after2Minutes
+    /// After the custom time set in Settings.
+    case custom
     case never
 
     /// A brief that shows up late (after the Mac wakes) stays at least this long, so it can still be read.
     static let minimumShowing: TimeInterval = 15
 
-    /// nil when it only closes by hand.
-    public func closeDate(for event: CalendarEvent, shownAt: Date) -> Date? {
+    /// nil when it only closes by hand. `customSeconds` is the time chosen for `.custom`.
+    public func closeDate(for event: CalendarEvent, shownAt: Date, customSeconds: Int = 60) -> Date? {
         let date: Date
         switch self {
         case .twoMinutesAfterStart: date = event.start.addingTimeInterval(MeetingBriefPlanner.lingerAfterStart)
@@ -80,6 +82,7 @@ public enum MeetingBriefClosing: String, CaseIterable, Sendable {
         case .after30Seconds: date = shownAt.addingTimeInterval(30)
         case .after1Minute: date = shownAt.addingTimeInterval(60)
         case .after2Minutes: date = shownAt.addingTimeInterval(120)
+        case .custom: date = shownAt.addingTimeInterval(TimeInterval(customSeconds))
         case .never: return nil
         }
         return max(date, shownAt.addingTimeInterval(Self.minimumShowing))

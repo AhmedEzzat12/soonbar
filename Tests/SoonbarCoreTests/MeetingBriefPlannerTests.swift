@@ -105,4 +105,13 @@ import Testing
         let late = start.addingTimeInterval(60)
         #expect(MeetingBriefClosing.atStart.closeDate(for: event, shownAt: late) == late.addingTimeInterval(15))
     }
+
+    @Test func customCloseTime() {
+        let start = Fixture.date(2026, 11, 5, 10, 0)
+        let event = Fixture.event("Sync", start, start.addingTimeInterval(1800))
+        let shown = start.addingTimeInterval(-300)
+        #expect(MeetingBriefClosing.custom.closeDate(for: event, shownAt: shown, customSeconds: 45) == shown.addingTimeInterval(45))
+        // Still at least 15 seconds, however short the custom time.
+        #expect(MeetingBriefClosing.custom.closeDate(for: event, shownAt: shown, customSeconds: 5) == shown.addingTimeInterval(15))
+    }
 }
