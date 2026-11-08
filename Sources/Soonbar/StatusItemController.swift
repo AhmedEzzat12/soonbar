@@ -44,7 +44,9 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
             model.scheduleRefresh(delay: 0.4)
         }
         model.popoverMode = mode
-        NSApp.activate()
+        // `NSApp.activate()` is only a request on macOS 14+, and another app in front can turn it down. The popover then
+        // opened in an inactive app, and the first right-click went to activating it, which closed its menu at once.
+        NSApp.activate(ignoringOtherApps: true)
         if !popover.isShown {
             popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
         }
