@@ -254,23 +254,39 @@ struct AlertsSettingsView: View {
                 Toggle("Full-screen alert when a meeting starts", isOn: $prefs.meetingAlertsEnabled)
                 LabeledContent("Show it") {
                     Menu(Self.leadSummary(prefs.meetingAlertLeadTimes)) {
-                        ForEach(Self.leadChoices, id: \.self) { minutes in
+                        ForEach(Self.leadChoices(prefs.meetingAlertLeadTimes), id: \.self) { minutes in
                             Toggle(Self.leadLabel(minutes), isOn: leadBinding(minutes))
                         }
+                        Divider()
+                        Button("Custom…") { addingCustomLead = true }
                     }
                     .fixedSize()
                 }
                 .disabled(!prefs.meetingAlertsEnabled)
+                if addingCustomLead {
+                    LabeledContent("Also alert") {
+                        HStack {
+                            DurationField(seconds: $customLeadSeconds, range: 60...(240 * 60), units: [.minutes],
+                                          suffix: "before")
+                            Button("Add") {
+                                prefs.meetingAlertLeadTimes = Array(Set(prefs.meetingAlertLeadTimes + [customLeadSeconds / 60]))
+                                    .sorted(by: >)
+                                addingCustomLead = false
+                            }
+                            Button("Cancel") { addingCustomLead = false }
+                        }
+                    }
+                    .disabled(!prefs.meetingAlertsEnabled)
+                }
                 Toggle("Only for events with a video call link", isOn: $prefs.meetingAlertsVideoOnly)
                     .disabled(!prefs.meetingAlertsEnabled)
-                Picker("Close it automatically", selection: $prefs.meetingAlertAutoDismissSeconds) {
-                    Text("Never").tag(0)
-                    Text("After 15 seconds").tag(15)
-                    Text("After 30 seconds").tag(30)
-                    Text("After 1 minute").tag(60)
-                    Text("After 2 minutes").tag(120)
-                    Text("After 5 minutes").tag(300)
-                }
+                PresetOrCustomPicker(
+                    title: "Close it automatically", value: $prefs.meetingAlertAutoDismissSeconds,
+                    presets: [(label: "Never", value: 0), (label: "After 15 seconds", value: 15),
+                              (label: "After 30 seconds", value: 30), (label: "After 1 minute", value: 60),
+                              (label: "After 2 minutes", value: 120), (label: "After 5 minutes", value: 300)],
+                    customRange: 5...3600, customStart: 45, customLabel: { "After \($0)" }
+                )
                 .disabled(!prefs.meetingAlertsEnabled)
                 TrailingButtons {
                     Button("Preview Alert") { model.previewMeetingAlert() }
@@ -292,7 +308,15 @@ struct AlertsSettingsView: View {
         .onChange(of: prefs.meetingAlertsEnabled) { model.rescheduleMeetingAlerts() }
     }
 
-    static let leadChoices = [15, 10, 5, 2, 1, 0]
+    @State private var addingCustomLead = false
+    @State private var customLeadSeconds = 20 * 60
+
+    static let leadPresets = [15, 10, 5, 2, 1, 0]
+
+    /// The presets plus any custom times already picked, longest first.
+    static func leadChoices(_ picked: [Int]) -> [Int] {
+        Set(leadPresets + picked).sorted(by: >)
+    }
 
     static func leadLabel(_ minutes: Int) -> String {
         minutes == 0 ? "When it starts" : minutes == 1 ? "1 minute before" : "\(minutes) minutes before"

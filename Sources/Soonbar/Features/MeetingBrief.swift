@@ -32,7 +32,7 @@ extension AppModel {
         if let first = due.first {
             // Meetings due at the same moment are marked too; replacing the brief a minute later would be noise.
             state.briefedIDs.formUnion(due.map(\.id))
-            state.panel.show(first, model: self, until: prefs.meetingBriefClosing.closeDate(for: first, shownAt: Date()))
+            state.panel.show(first, model: self, until: prefs.meetingBriefClosing.closeDate(for: first, shownAt: Date(), customSeconds: prefs.meetingBriefCustomCloseSeconds))
         }
         guard let next = MeetingBriefPlanner.nextBriefDate(
             events: candidates, now: Date(), settings: settings, alreadyBriefed: state.briefedIDs
@@ -49,7 +49,7 @@ extension AppModel {
         let now = Date()
         let upcoming = MeetingBriefPlanner.nextMeeting(events: visibleEvents, now: now, settings: prefs.meetingBriefSettings)
         let event = upcoming ?? sampleBriefEvent(now: now)
-        meetingBriefState.panel.show(event, model: self, until: prefs.meetingBriefClosing.closeDate(for: event, shownAt: now))
+        meetingBriefState.panel.show(event, model: self, until: prefs.meetingBriefClosing.closeDate(for: event, shownAt: now, customSeconds: prefs.meetingBriefCustomCloseSeconds))
     }
 
     private func sampleBriefEvent(now: Date) -> CalendarEvent {
@@ -92,9 +92,12 @@ struct MeetingBriefSettingsSection: View {
         @Bindable var prefs = prefs
         Section {
             Toggle("Show a meeting brief before meetings", isOn: $prefs.meetingBriefEnabled)
-            Picker("Show it", selection: $prefs.meetingBriefLeadMinutes) {
-                ForEach([2, 5, 10], id: \.self) { Text("\($0) minutes before").tag($0) }
-            }
+            PresetOrCustomPicker(
+                title: "Show it", value: $prefs.meetingBriefLeadMinutes,
+                presets: [2, 5, 10].map { (label: "\($0) minutes before", value: $0) },
+                storedUnit: .minutes, customRange: 1...120, units: [.minutes], customSuffix: "before",
+                customLabel: { "\($0) before" }
+            )
             .disabled(!prefs.meetingBriefEnabled)
             Toggle("Only for meetings with other people", isOn: $prefs.meetingBriefOnlyWithAttendees)
                 .disabled(!prefs.meetingBriefEnabled)
@@ -109,9 +112,18 @@ struct MeetingBriefSettingsSection: View {
                 Text("After 30 seconds").tag(MeetingBriefClosing.after30Seconds)
                 Text("After 1 minute").tag(MeetingBriefClosing.after1Minute)
                 Text("After 2 minutes").tag(MeetingBriefClosing.after2Minutes)
+                Text(prefs.meetingBriefClosing == .custom
+                     ? "After \(CustomDuration.label(prefs.meetingBriefCustomCloseSeconds))" : "After a custom time…")
+                    .tag(MeetingBriefClosing.custom)
                 Text("Only when I close it").tag(MeetingBriefClosing.never)
             }
             .disabled(!prefs.meetingBriefEnabled)
+            if prefs.meetingBriefClosing == .custom {
+                LabeledContent("Close after") {
+                    DurationField(seconds: $prefs.meetingBriefCustomCloseSeconds, range: 15...3600)
+                }
+                .disabled(!prefs.meetingBriefEnabled)
+            }
             TrailingButtons {
                 Button("Preview Brief") { model.previewMeetingBrief() }
             }
@@ -119,7 +131,7 @@ struct MeetingBriefSettingsSection: View {
             Text("Meeting brief")
         } footer: {
             SectionFooter("A small panel in the top-right corner shows who's coming, the notes and any links. "
-                          + "It never takes focus and closes a couple of minutes after the meeting starts. "
+                          + "It never takes focus and closes when you choose. "
                           + "Summaries are written on this Mac and marked as such; the original notes are a click away.")
         }
         .onChange(of: prefs.meetingBriefEnabled) { _, enabled in

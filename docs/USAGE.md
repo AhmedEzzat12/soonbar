@@ -58,10 +58,10 @@ Everything below is off until you turn it on.
 
 | Feature | Where | What it does |
 |---|---|---|
-| Meeting brief | Alerts | A small panel before a meeting: who's coming, links and notes. Swipe it right to close. It closes by itself 2 minutes after the start, or when you choose. |
+| Meeting brief | Alerts | A small panel before a meeting: who's coming, links and notes. Swipe it right to close. Shows 5 minutes before and closes 2 minutes after the start by default; pick other times or type your own. |
 | Notes summaries | Alerts → Meeting brief | Apple Intelligence sums up long invitation notes, marked as a summary |
-| Alert times · snooze | Alerts | Alert at several times (15–1 min before, at the start); "remind me in 1/2/5 min" |
-| Close the alert automatically | Alerts | After 15 s–5 min, with a countdown on the alert |
+| Alert times · snooze | Alerts | Alert at several times (15–1 min before, at the start, or Custom… up to 4 hours); "remind me in 1/2/5 min" |
+| Close the alert automatically | Alerts | After 15 s–5 min or a custom time (5 s–1 h), with a countdown on the alert |
 | Shortcuts on meetings | Alerts | Run a Shortcut when a meeting starts and ends, e.g. Do Not Disturb |
 | Add from Text | General | "From Text…" in quick add; read by Apple Intelligence or date detection |
 | Keep the current meeting | Menu Bar | `Standup · 3m left → Design review`, with a red timer near the end |
