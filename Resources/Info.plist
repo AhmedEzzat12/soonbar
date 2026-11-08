@@ -9,7 +9,7 @@
     <key>CFBundleIconFile</key>
     <string>AppIcon</string>
     <key>TelemetryDeckAppID</key>
-    <string></string>
+    <string>C9F5C095-B9D1-42B8-B7C7-05F041DE55D8</string>
     <key>CFBundleIdentifier</key>
     <string>com.zod.soonbar</string>
     <key>CFBundleName</key>
