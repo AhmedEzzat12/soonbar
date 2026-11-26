@@ -19,6 +19,9 @@ public struct QuickAddDraft: Equatable, Sendable {
     public var end: Date
     public var hasDueTime: Bool
     public var hasExplicitDate: Bool
+    /// No day was typed: either no date at all or only a time ("3pm"). Such a draft can move to the day picked in
+    /// the month grid.
+    public var dayIsImplied = true
 
     /// All-day events are saved as one whole day (midnight to the next midnight), whatever time or
     /// seconds-based length the date pickers left behind.
@@ -27,6 +30,19 @@ public struct QuickAddDraft: Equatable, Sendable {
         var copy = self
         copy.start = calendar.startOfDay(for: start)
         copy.end = calendar.date(byAdding: .day, value: 1, to: copy.start) ?? copy.start
+        return copy
+    }
+
+    /// Moves a draft with no typed day onto `day`, keeping its time of day and length. A typed day wins.
+    public func placed(onDay day: Date, calendar: Calendar) -> QuickAddDraft {
+        guard dayIsImplied, !calendar.isDate(start, inSameDayAs: day) else { return self }
+        let time = calendar.dateComponents([.hour, .minute, .second], from: start)
+        guard let newStart = calendar.date(
+            bySettingHour: time.hour ?? 0, minute: time.minute ?? 0, second: time.second ?? 0, of: calendar.startOfDay(for: day)
+        ) else { return self }
+        var copy = self
+        copy.end = newStart.addingTimeInterval(end.timeIntervalSince(start))
+        copy.start = newStart
         return copy
     }
 }
@@ -82,11 +98,12 @@ public struct QuickAddParser {
         }
 
         let detected = detectDate(in: text)
+        let dayIsImplied = detected.map { Self.isClockTimeOnly((text as NSString).substring(with: $0.range)) } ?? true
         if let detected { text = Self.removing(detected.range, from: text) }
 
         var draft = QuickAddDraft(
             kind: kind, title: Self.cleanTitle(text), calendarID: calendarID, unmatchedCalendarToken: unmatchedToken,
-            isAllDay: false, start: now, end: now, hasDueTime: false, hasExplicitDate: detected != nil
+            isAllDay: false, start: now, end: now, hasDueTime: false, hasExplicitDate: detected != nil, dayIsImplied: dayIsImplied
         )
         let duration = TimeInterval((durationMinutes ?? defaultDurationMinutes) * 60)
         switch (kind, detected) {
@@ -239,6 +256,15 @@ public struct QuickAddParser {
 
     static func containsClockTime(_ text: String) -> Bool {
         text.range(of: clockTimePattern, options: .regularExpression) != nil
+    }
+
+    /// "3pm", "at 10:30" or "noon", with no day in it.
+    static func isClockTimeOnly(_ phrase: String) -> Bool {
+        // "at 10" only when no minutes follow, so "at 10:30" is one time.
+        let times = #"(?i)\b\d{1,2}:\d{2}(\s?(am|pm))?|\b\d{1,2}\s?(am|pm)\b|\bnoon\b|\bmidnight\b|\bat\s+\d{1,2}\b(?!:)"#
+        let rest = phrase.replacingOccurrences(of: times, with: " ", options: .regularExpression)
+            .replacingOccurrences(of: #"(?i)\b(at|from|to|until|till)\b|[-–—]"#, with: " ", options: .regularExpression)
+        return containsClockTime(phrase) && rest.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
     func nextHalfHour() -> Date {

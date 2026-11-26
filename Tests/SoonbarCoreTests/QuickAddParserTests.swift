@@ -249,3 +249,47 @@ extension QuickAddParserTests {
         #expect(!parse("Hike next weekend").hasExplicitDate)
     }
 }
+
+@Suite struct QuickAddPlacementTests {
+    let cal = Calendar.current
+    func parse(_ text: String) -> QuickAddDraft {
+        QuickAddParser(calendar: cal, now: Date()).parse(text, calendars: [])
+    }
+    var friday: Date { cal.date(byAdding: .day, value: 3, to: cal.startOfDay(for: Date()))! }
+
+    @Test func timeOnlyMovesToPickedDay() {
+        let draft = parse("Dentist 3pm 1h").placed(onDay: friday, calendar: cal)
+        #expect(draft.start == cal.date(bySettingHour: 15, minute: 0, second: 0, of: friday))
+        #expect(draft.end.timeIntervalSince(draft.start) == 3600)
+        #expect(draft.title == "Dentist")
+    }
+
+    @Test func noDateMovesToPickedDayKeepingTime() {
+        let parsed = parse("Call mom")
+        let draft = parsed.placed(onDay: friday, calendar: cal)
+        #expect(cal.isDate(draft.start, inSameDayAs: friday))
+        #expect(cal.component(.hour, from: draft.start) == cal.component(.hour, from: parsed.start))
+        #expect(cal.component(.minute, from: draft.start) == cal.component(.minute, from: parsed.start))
+    }
+
+    @Test func typedDayWins() {
+        let parsed = parse("Lunch tomorrow 1pm")
+        #expect(!parsed.dayIsImplied)
+        #expect(parsed.placed(onDay: friday, calendar: cal) == parsed)
+    }
+
+    @Test func reminderWithoutDateMovesToPickedDay() {
+        let draft = parse("!Pay rent").placed(onDay: friday, calendar: cal)
+        #expect(draft.start == friday)
+    }
+
+    @Test(arguments: ["3pm", "at 10:30", "noon", "9:00 - 10:00"])
+    func clockTimesAreTimeOnly(_ phrase: String) {
+        #expect(QuickAddParser.isClockTimeOnly(phrase))
+    }
+
+    @Test(arguments: ["tomorrow 3pm", "friday", "Dec 3 at 10:30"])
+    func phrasesWithADayAreNot(_ phrase: String) {
+        #expect(!QuickAddParser.isClockTimeOnly(phrase))
+    }
+}
