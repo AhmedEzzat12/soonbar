@@ -3,7 +3,10 @@
 ## Quick add
 
 Press ⌥⌘N anywhere (or **New** in the popover) and type. The form below fills in as you go; anything you change
-by hand stays put.
+by hand stays put. With a day picked in the month, an entry with no day in it (`Dentist 3pm`) goes on that day.
+
+Esc or the back arrow returns to the agenda and keeps what you typed: **New** turns into **Draft** for the next
+hour, so clicking away loses nothing. **Discard** throws it away.
 
 | You type | You get |
 |---|---|

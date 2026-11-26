@@ -72,6 +72,10 @@ struct AddFromTextView: View {
             footer
         }
         .padding(12)
+        // Esc steps back: from the found items to the text, then to the agenda.
+        .onExitCommand {
+            if rows != nil { rows = nil; note = nil; errorMessage = nil } else { model.popoverMode = .agenda }
+        }
         .onAppear {
             if text.isEmpty { text = model.importText }
             model.importText = ""
@@ -192,7 +196,6 @@ struct AddFromTextView: View {
             }
             Spacer()
             Button("Cancel") { model.popoverMode = .agenda }
-                .keyboardShortcut(.cancelAction)
             if let rows {
                 let count = rows.filter(\.isSelected).count
                 Button(count == 1 ? "Add 1" : "Add \(count)") { add() }

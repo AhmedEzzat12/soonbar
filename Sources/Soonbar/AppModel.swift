@@ -47,6 +47,8 @@ final class AppModel {
     var popoverMode: PopoverMode = .agenda
     /// Text handed from quick add to Add from Text (pasting a long text into quick add offers to read it).
     var importText = ""
+    /// What was typed in New and left without adding; see QuickAddMemory.
+    var quickAddMemory: QuickAddMemory?
     var isPinned = false
     /// Bumped each time the popover closes; its views reset their own state on it (scroll position, expanded rows),
     /// so the next opening starts fresh without SwiftUI rebuilding the whole popover on the click.

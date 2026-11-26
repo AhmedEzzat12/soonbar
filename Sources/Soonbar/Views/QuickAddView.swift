@@ -1,6 +1,17 @@
 import SoonbarCore
 import SwiftUI
 
+/// What was typed in New, kept when leaving without adding (Esc, the back button, clicking away), so pressing New
+/// again picks up where it left off. Dropped after an hour, when "tomorrow" may no longer mean what it did.
+struct QuickAddMemory {
+    var text: String
+    var draft: QuickAddDraft
+    var overridden: Set<QuickAddView.Field>
+    var savedAt = Date()
+
+    var isFresh: Bool { Date().timeIntervalSince(savedAt) < 3600 }
+}
+
 /// One line of text parsed live into an editable form. Fields the user edits by hand
 /// stop being overwritten by further typing.
 struct QuickAddView: View {
@@ -11,6 +22,9 @@ struct QuickAddView: View {
     @State private var overridden: Set<Field> = []
     @State private var errorMessage: String?
     @State private var isSaving = false
+    /// Set when the draft is added or discarded, so leaving doesn't keep it.
+    @State private var finished = false
+    @State private var restoredNote: String?
     @FocusState private var inputFocused: Bool
 
     enum Field: Hashable {
@@ -19,7 +33,7 @@ struct QuickAddView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("New").font(.headline)
+            header
             TextField("Lunch with Sara tomorrow 1pm 1h #work", text: $text)
                 .textFieldStyle(.roundedBorder)
                 .focused($inputFocused)
@@ -59,20 +73,38 @@ struct QuickAddView: View {
             }
 
             HStack {
+                Button("Discard", role: .destructive) { discard() }
+                    .disabled(!hasContent)
+                    .help("Throw away what you typed")
                 Spacer()
-                Button("Cancel") { model.popoverMode = .agenda }
-                    .keyboardShortcut(.cancelAction)
                 Button("Add") { save() }
                     .keyboardShortcut(.defaultAction)
                     .disabled(!canSave)
             }
         }
         .padding(12)
-        .onAppear {
-            reparse()
-            inputFocused = true
-        }
+        .onAppear(perform: restore)
+        .onDisappear(perform: keep)
+        .onExitCommand { goBack() }
         .onChange(of: text) { reparse() }
+    }
+
+    private var header: some View {
+        HStack(spacing: 4) {
+            Button(action: goBack) {
+                Image(systemName: "chevron.left")
+                    .font(.body.weight(.semibold))
+                    .frame(width: 22, height: 22)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.borderless)
+            .help(hasContent ? "Back to the agenda (Esc). What you typed is kept." : "Back to the agenda (Esc)")
+            Text(draft.kind == .event ? "New Event" : "New Reminder").font(.headline)
+            Spacer()
+            if hasContent, let restoredNote {
+                Text(restoredNote).font(.caption).foregroundStyle(.secondary)
+            }
+        }
     }
 
     private var form: some View {
@@ -110,8 +142,7 @@ struct QuickAddView: View {
                 if !draft.isAllDay {
                     GridRow {
                         label("Ends")
-                        DatePicker("", selection: binding(\.end, .end), in: draft.start...,
-                                   displayedComponents: [.date, .hourAndMinute])
+                        DatePicker("", selection: endBinding, displayedComponents: [.date, .hourAndMinute])
                             .labelsHidden()
                     }
                 }
@@ -189,6 +220,18 @@ struct QuickAddView: View {
         )
     }
 
+    /// No `in: start...` range on the picker: while typing moved the start, it clamped the old end to the old start
+    /// and wrote that back as a hand-picked end. The end is kept after the start here instead.
+    private var endBinding: Binding<Date> {
+        Binding(
+            get: { draft.end },
+            set: { newEnd in
+                draft.end = max(newEnd, draft.start)
+                overridden.insert(.end)
+            }
+        )
+    }
+
     private var calendarBinding: Binding<String?> {
         Binding(
             get: { resolvedCalendarID },
@@ -204,6 +247,10 @@ struct QuickAddView: View {
             return chosen
         }
         return model.defaultCalendarID(for: draft.kind)
+    }
+
+    private var hasContent: Bool {
+        !text.trimmingCharacters(in: .whitespaces).isEmpty || overridden.contains(.title)
     }
 
     private var canSave: Bool {
@@ -226,12 +273,48 @@ struct QuickAddView: View {
         }
         if !overridden.contains(.dueTime) { next.hasDueTime = parsed.hasDueTime }
         next.hasExplicitDate = parsed.hasExplicitDate
+        next.dayIsImplied = parsed.dayIsImplied
+        // With a day picked in the month grid, "Dentist 3pm" goes on that day.
+        if let day = model.selectedDay, !overridden.contains(.start) {
+            next = next.placed(onDay: day, calendar: model.calendar)
+        }
         draft = next
+    }
+
+    // MARK: - Leaving
+
+    private func goBack() {
+        model.popoverMode = .agenda
+    }
+
+    private func restore() {
+        if let memory = model.quickAddMemory, memory.isFresh {
+            text = memory.text
+            draft = memory.draft
+            overridden = memory.overridden
+            restoredNote = "Draft"
+        }
+        model.quickAddMemory = nil
+        reparse()
+        inputFocused = true
+    }
+
+    /// Leaving without adding keeps what was typed for next time.
+    private func keep() {
+        guard !finished, hasContent else { return }
+        model.quickAddMemory = QuickAddMemory(text: text, draft: draft, overridden: overridden)
+    }
+
+    private func discard() {
+        finished = true
+        model.quickAddMemory = nil
+        model.popoverMode = .agenda
     }
 
     /// Long text pasted here is carried over, so it doesn't have to be pasted again.
     private func openAddFromText() {
         model.importText = text.count > 80 ? text : ""
+        if text.count > 80 { finished = true }
         model.popoverMode = .addFromText
     }
 
@@ -239,10 +322,12 @@ struct QuickAddView: View {
         guard canSave, let calendarID = resolvedCalendarID else { return }
         isSaving = true
         do {
+            finished = true
             try model.save(draft, calendarID: calendarID)
         } catch {
             errorMessage = error.localizedDescription
             isSaving = false
+            finished = false
         }
     }
 }

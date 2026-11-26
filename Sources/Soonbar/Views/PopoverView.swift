@@ -36,9 +36,14 @@ struct FooterView: View {
             Button {
                 model.popoverMode = .quickAdd
             } label: {
-                Label("New", systemImage: "plus")
+                if model.quickAddMemory?.isFresh == true {
+                    Label("Draft", systemImage: "square.and.pencil")
+                } else {
+                    Label("New", systemImage: "plus")
+                }
             }
             .keyboardShortcut("n")
+            .help(model.quickAddMemory?.isFresh == true ? "Continue the event you started (⌘N)" : "New event or reminder (⌘N)")
             .disabled(model.eventAccess != .granted)
 
             if model.prefs.shareAvailabilityEnabled {
